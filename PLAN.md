@@ -500,7 +500,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 9 — Camada de dados (queries)
 
-- [ ] **Objetivo**: centralizar as leituras de dados do Supabase usadas pelas páginas, usando a semântica de "hoje" em `America/Sao_Paulo`.
+- [x] **Objetivo**: centralizar as leituras de dados do Supabase usadas pelas páginas, usando a semântica de "hoje" em `America/Sao_Paulo`.
 - **Arquivos/componentes envolvidos**: `lib/data/contents.ts`, `tests/integration/contents-data.test.ts`.
 - **Alterações necessárias**:
   - `getDueToday(client)`: conteúdos `active` com `next_review_date <= todaySaoPaulo()`.
