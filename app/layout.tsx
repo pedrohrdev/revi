@@ -4,6 +4,7 @@ import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/actions";
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,6 +46,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           </header>
         ) : null}
         {children}
+        <Toaster />
       </body>
     </html>
   );
