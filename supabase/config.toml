@@ -164,9 +164,14 @@ site_url = "https://revi-rouge.vercel.app"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 # Needed since Etapa 19 (forgot password): resetPasswordForEmail's redirectTo
 # must be in this allow-list or Supabase silently falls back to site_url,
-# which broke the production reset-password link. Includes the local dev
-# target too, since this project's dev and prod share one Supabase instance.
-additional_redirect_urls = ["http://localhost:3000/reset-password"]
+# which broke the production reset-password link. Matching must be exact
+# (site_url itself is not treated as a prefix match for sub-paths), so the
+# production confirm route needs its own entry alongside the local dev one —
+# this project's dev and prod share one Supabase instance.
+additional_redirect_urls = [
+  "http://localhost:3000/reset-password/confirm",
+  "https://revi-rouge.vercel.app/reset-password/confirm",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.

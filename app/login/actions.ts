@@ -36,7 +36,7 @@ export async function requestPasswordReset(formData: FormData): Promise<void> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl}/reset-password`,
+    redirectTo: `${siteUrl}/reset-password/confirm`,
   });
 
   // Supabase never reveals whether the email is registered (avoids account
