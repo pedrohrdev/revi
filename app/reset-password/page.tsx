@@ -15,16 +15,18 @@ const ERROR_MESSAGES: Record<string, string> = {
 export default async function ResetPasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ code?: string; error?: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const params = await searchParams;
 
-  if (params.code) {
-    const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(params.code);
-    if (error) {
-      redirect("/login?error=reset_link_invalid&tab=forgot");
-    }
+  // The PKCE code exchange happens in reset-password/confirm/route.ts (a
+  // Route Handler, which can persist cookies) and redirects here only on
+  // success — so no active session at this point means an invalid/expired
+  // link or a direct visit, not a race to handle.
+  const supabase = await createClient();
+  const { data, error: claimsError } = await supabase.auth.getClaims();
+  if (claimsError || !data?.claims) {
+    redirect("/login?error=reset_link_invalid&tab=forgot");
   }
 
   const errorMessage = params.error
