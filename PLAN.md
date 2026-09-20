@@ -410,7 +410,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 3 — Lógica pura do algoritmo e utilitário de datas (com testes)
 
-- [ ] **Objetivo**: isolar as regras do algoritmo de repetição espaçada e a semântica de datas em funções puras, testáveis sem banco ou UI.
+- [x] **Objetivo**: isolar as regras do algoritmo de repetição espaçada e a semântica de datas em funções puras, testáveis sem banco ou UI.
 - **Arquivos/componentes envolvidos**: `lib/review.ts`, `lib/date.ts`, `tests/unit/review.test.ts`, `tests/unit/date.test.ts`.
 - **Alterações necessárias**:
   - `lib/date.ts`: `todaySaoPaulo(): string` (formato `YYYY-MM-DD`, baseado em `America/Sao_Paulo`); `isFutureSaoPaulo(dateStr: string): boolean`.
