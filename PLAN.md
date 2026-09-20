@@ -553,12 +553,13 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 12 — Lista de conteúdos
 
-- [ ] **Objetivo**: visão completa de todos os conteúdos do usuário, filtrável por status.
+- [x] **Objetivo**: visão completa de todos os conteúdos do usuário, filtrável por status.
 - **Arquivos/componentes envolvidos**: `app/contents/page.tsx`.
 - **Alterações necessárias**:
   - Tabs (shadcn) para Ativos / Dominados / Arquivados, usando `getAllByStatus`.
   - Link para o detalhe de cada conteúdo.
 - **Critérios de conclusão**: verificação manual — as três abas mostram os conteúdos corretos conforme o `status` no banco.
+  - **Nota de verificação (2026-09-20)**: mesma limitação das Etapas 8 e 11 — sem sessão de navegador automatizável, não deu para confirmar visualmente. `getAllByStatus` já tem cobertura de teste (Etapa 9) para cada status; build type-checa a página contra esse retorno; lint limpo; `/contents` sem sessão confirmado redirecionando para `/login` (proxy cobre a rota).
 - **Dependências**: Etapas 8 e 9.
 
 ### Etapa 13 — Novo conteúdo
