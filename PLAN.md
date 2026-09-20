@@ -564,12 +564,13 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 13 — Novo conteúdo
 
-- [ ] **Objetivo**: permitir cadastrar um novo conteúdo estudado pela UI.
+- [x] **Objetivo**: permitir cadastrar um novo conteúdo estudado pela UI.
 - **Arquivos/componentes envolvidos**: `app/contents/new/page.tsx`.
 - **Alterações necessárias**:
   - Formulário `<form>` nativo (usando `Input`, `Textarea`, `Label`, `Button` do shadcn, sem `react-hook-form`/`zod`) com título (obrigatório), matéria (opcional), notas (opcional), data de estudo (default hoje, input de data não permite futuro no client como conveniência de UX — a validação real continua sendo a da Server Action).
   - Submissão chama `createContent`; redireciona ao dashboard após sucesso; toast de confirmação ou de erro.
 - **Critérios de conclusão**: verificação manual — conteúdo criado aparece corretamente no dashboard/lista com `next_review_date` calculada conforme a Etapa 3/10; tentar submeter com data futura mostra erro.
+  - **Nota de verificação (2026-09-20)**: mesma limitação das Etapas 8, 11 e 12. `createContent` já tem cobertura de teste completa (Etapa 10, incluindo rejeição de data futura); build type-checa o formulário contra essa action; lint limpo; `/contents/new` sem sessão confirmado redirecionando para `/login`. O `input[type=date] max` impede escolher uma data futura no client como conveniência de UX (a validação real é da Server Action).
 - **Dependências**: Etapas 8 e 10.
 
 ### Etapa 14 — Detalhe do conteúdo
