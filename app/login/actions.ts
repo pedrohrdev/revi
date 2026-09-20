@@ -20,6 +20,7 @@ export async function signInWithMagicLink(formData: FormData): Promise<void> {
   });
 
   if (error) {
+    console.error("signInWithOtp failed:", error.status, error.message);
     redirect("/login?error=send_failed");
   }
 
