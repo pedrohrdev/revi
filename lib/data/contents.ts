@@ -31,7 +31,10 @@ export async function getAllByStatus(
     .from("contents")
     .select("*")
     .eq("status", status)
-    .order("created_at", { ascending: false });
+    // Meaningful for "active" (the dashboard's full list, per PLAN.md
+    // Etapa 11); mastered/archived rows mostly have a null next_review_date
+    // and just sort after everything else (Postgres default: NULLS LAST).
+    .order("next_review_date", { ascending: true });
 
   if (error) throw new Error(`failed_to_get_contents_by_status: ${error.message}`);
   return data;

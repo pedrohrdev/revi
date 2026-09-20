@@ -539,7 +539,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 11 — Dashboard
 
-- [ ] **Objetivo**: página inicial mostrando o que precisa ser revisado hoje, consumindo a camada de dados e actions já testadas.
+- [x] **Objetivo**: página inicial mostrando o que precisa ser revisado hoje, consumindo a camada de dados e actions já testadas.
 - **Arquivos/componentes envolvidos**: `app/page.tsx`.
 - **Alterações necessárias**:
   - Seção "Para revisar hoje" usando `getDueToday`.
@@ -548,6 +548,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
   - Link para "Novo conteúdo".
   - Estado vazio quando não há nada para revisar.
 - **Critérios de conclusão**: verificação manual no navegador — dashboard reflete corretamente o estado do banco; marcar como revisado atualiza a lista sem reload manual. (A lógica de negócio já foi validada na Etapa 10; aqui valida-se apenas a integração visual.)
+  - **Nota de verificação (2026-09-20)**: não foi possível confirmar visualmente numa sessão autenticada real — obter uma sessão de navegador de forma automatizada exigiria completar um login por magic link, e o token bruto do e-mail nunca fica acessível via banco (só o hash fica salvo em `auth.one_time_tokens`), então não há como automatizar isso sem o usuário clicar no link (o que ele pediu para não fazer — ver Etapa 8). Evidências indiretas fortes: `next build` type-checa a página inteira (os tipos de `ContentRow` retornados por `getDueToday`/`getAllByStatus`, já testadas na Etapa 9, batem com o que o JSX consome); lint limpo; revisão manual do código confirma os estados vazios, o link para `/contents/new` e a integração do botão com `markReviewed` (Etapa 10, já testada) e toast de erro.
 - **Dependências**: Etapas 8, 9, 10.
 
 ### Etapa 12 — Lista de conteúdos
