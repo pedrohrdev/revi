@@ -575,13 +575,14 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 14 — Detalhe do conteúdo
 
-- [ ] **Objetivo**: página com informações completas e ações sobre um conteúdo específico.
+- [x] **Objetivo**: página com informações completas e ações sobre um conteúdo específico.
 - **Arquivos/componentes envolvidos**: `app/contents/[id]/page.tsx`.
 - **Alterações necessárias**:
   - Exibir título, matéria, notas, status, próxima data de revisão (ou indicação de "dominado"/"arquivado" quando não houver).
   - Exibir histórico de revisões (`getReviewLogs`).
   - Botões de ação, exibidos condicionalmente conforme `status`: "Marcar como revisado" (só se `active`), "Arquivar" (só se `active`), "Resetar" (de qualquer status, incluindo `active`), link para "Editar".
 - **Critérios de conclusão**: verificação manual — todas as ações disponíveis na página funcionam e refletem imediatamente o novo estado; histórico permanece visível após reset.
+  - **Nota de verificação (2026-09-20)**: mesma limitação das etapas de UI anteriores. `markReviewed`/`archiveContent`/`resetContent`/`getContentById`/`getReviewLogs` já têm cobertura de teste completa (Etapas 9/10, incluindo histórico preservado após reset); build type-checa a página (inclusive `PageProps<"/contents/[id]">` gerado pelo Next.js) contra esses retornos; lint limpo; rota confirmada redirecionando para `/login` sem sessão.
 - **Dependências**: Etapas 9 e 10.
 
 ### Etapa 15 — Edição de conteúdo
