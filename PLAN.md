@@ -474,7 +474,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 7 — Clientes Supabase e proxy de sessão
 
-- [ ] **Objetivo**: ter a integração de autenticação/sessão funcionando entre client, server e proxy.
+- [x] **Objetivo**: ter a integração de autenticação/sessão funcionando entre client, server e proxy.
 - **Arquivos/componentes envolvidos**: `lib/supabase/client.ts`, `lib/supabase/server.ts`, `proxy.ts`.
 - **Alterações necessárias**:
   - `lib/supabase/client.ts`: client Supabase para uso em Client Components.
