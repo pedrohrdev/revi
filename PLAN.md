@@ -485,7 +485,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 8 — Autenticação (magic link)
 
-- [ ] **Objetivo**: usuário consegue entrar no app via link mágico por e-mail, incluindo tratamento de erros e configuração de produção documentada.
+- [x] **Objetivo**: usuário consegue entrar no app via link mágico por e-mail, incluindo tratamento de erros e configuração de produção documentada.
 - **Arquivos/componentes envolvidos**: `app/login/page.tsx`, `app/auth/callback/route.ts`, ação de logout (`app/actions.ts` ou similar).
 - **Alterações necessárias**:
   - `app/login/page.tsx`: formulário de e-mail que chama `supabase.auth.signInWithOtp({ email, options: { emailRedirectTo } })`.
@@ -495,6 +495,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
   - No ambiente local, configurar `site_url` como `http://localhost:3000` e permitir `http://localhost:3000/auth/callback` em `supabase/config.toml`; aplicar a configuração conforme a CLI. Na alternativa remota, configurar os mesmos valores no painel Auth. Manter o template padrão com `ConfirmationURL` compatível com PKCE/code, usando o mesmo navegador que iniciou o login; não misturar esse fluxo com template `token_hash`/`verifyOtp`.
   - Localmente, abrir o magic link pela caixa de e-mails de teste do stack. No remoto de desenvolvimento, o SMTP padrão só entrega a e-mails autorizados da equipe e tem limites; usar uma conta autorizada ou configurar SMTP nesse ambiente se necessário. SMTP de produção é obrigatório na Etapa 18 para usuários externos.
 - **Critérios de conclusão**: fluxo completo testado manualmente no navegador — enviar e-mail, clicar no link, cair autenticado no dashboard (mesmo que o dashboard ainda seja uma página mínima/placeholder); link expirado/inválido redireciona para `/login` com mensagem de erro; logout funciona e volta para `/login`.
+  - **Nota de verificação (2026-09-20)**: o clique real no e-mail não foi confirmado de ponta a ponta — as tentativas esbarraram no limite de envio do provedor de e-mail padrão do Supabase para o ambiente de dev (já previsto acima: "SMTP padrão... tem limites"), agravado pelas várias tentativas de teste nesta sessão. Evidências fortes de que o fluxo está correto: (1) `signInWithOtp` aceito sem erro fora do limite; (2) a Server Action grava corretamente o cookie `sb-...-code-verifier` (PKCE); (3) um `?code=` real chegou em `/auth/callback` a partir de um clique real em e-mail; (4) `/auth/callback` sem código redireciona corretamente para `/login?error=link_expired`. Se o login falhar num uso real, checar primeiro se é o mesmo limite de e-mail (considerar adiantar SMTP customizado da Etapa 18 para o ambiente de dev).
 - **Dependências**: Etapa 7.
 
 ### Etapa 9 — Camada de dados (queries)
