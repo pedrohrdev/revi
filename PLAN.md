@@ -598,7 +598,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 16 — Polimento de UI
 
-- [ ] **Objetivo**: deixar a experiência coerente e sem arestas antes da verificação final.
+- [x] **Objetivo**: deixar a experiência coerente e sem arestas antes da verificação final.
 - **Arquivos/componentes envolvidos**: todas as páginas criadas nas etapas 11–15.
 - **Alterações necessárias**:
   - Estados vazios (nenhum conteúdo cadastrado, nenhuma revisão hoje).
@@ -606,6 +606,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
   - Toasts de feedback (sucesso/erro) via `sonner` em todas as actions, incluindo os erros específicos do RPC (`already_reviewed_today`, `content_not_active`).
   - Responsividade básica (mobile/desktop).
 - **Critérios de conclusão**: navegação fluida em telas pequenas e grandes, nenhuma ação sem feedback visual.
+  - **Nota de verificação (2026-09-20)**: mesma limitação das etapas de UI anteriores para confirmação visual ao vivo. Auditoria de código cobriu: (1) toast de sucesso ausente em `MarkReviewedButton` (inconsistente com `ContentActions`) — corrigido; (2) `loading.tsx` adicionado em `/`, `/contents`, `/contents/[id]` e `/contents/[id]/edit` (Suspense automático do App Router); (3) header (e-mail truncado/oculto em telas estreitas) e o card do dashboard (data + botão empilham em vez de espremer) ajustados para mobile. Build type-checa tudo; lint limpo; todas as rotas protegidas confirmadas redirecionando para `/login` sem sessão.
 - **Dependências**: Etapas 11–15.
 
 ### Etapa 17 — Verificação end-to-end local

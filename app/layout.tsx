@@ -33,10 +33,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         {email ? (
-          <header className="flex items-center justify-between border-b px-4 py-3">
-            <span className="text-sm font-medium">Revi</span>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">{email}</span>
+          <header className="flex items-center justify-between gap-3 border-b px-4 py-3">
+            <span className="shrink-0 text-sm font-medium">Revi</span>
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="hidden truncate text-sm text-muted-foreground sm:inline">
+                {email}
+              </span>
               <form action={signOut}>
                 <Button type="submit" variant="outline" size="sm">
                   Sair

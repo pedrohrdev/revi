@@ -14,7 +14,7 @@ function ContentCard({ content }: { content: ContentRow }) {
           <p className="text-sm text-muted-foreground">{content.subject}</p>
         ) : null}
       </CardHeader>
-      <CardContent className="flex items-center justify-between gap-4">
+      <CardContent className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Próxima revisão: {content.next_review_date ?? "—"}
         </p>
@@ -33,7 +33,7 @@ export default async function Home() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 p-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">Revi</h1>
         <Link href="/contents/new" className={buttonVariants()}>
           Novo conteúdo

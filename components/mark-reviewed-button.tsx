@@ -18,7 +18,9 @@ export function MarkReviewedButton({ contentId }: { contentId: string }) {
       const result = await markReviewed(contentId);
       if (!result.ok) {
         toast.error(ERROR_MESSAGES[result.error] ?? "Não foi possível marcar como revisado.");
+        return;
       }
+      toast.success("Revisão registrada!");
     });
   }
 
