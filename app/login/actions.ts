@@ -26,6 +26,29 @@ export async function signIn(formData: FormData): Promise<void> {
   redirect("/");
 }
 
+export async function requestPasswordReset(formData: FormData): Promise<void> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email) {
+    redirect("/login?error=missing_fields&tab=forgot");
+  }
+
+  const supabase = await createClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl}/reset-password`,
+  });
+
+  // Supabase never reveals whether the email is registered (avoids account
+  // enumeration) — always redirect to the same "check your inbox" state,
+  // even on error; only log server-side for our own visibility.
+  if (error) {
+    console.error("resetPasswordForEmail failed:", error.status, error.message);
+  }
+
+  redirect("/login?sent=forgot&tab=forgot");
+}
+
 export async function signUp(formData: FormData): Promise<void> {
   const { email, password } = readCredentials(formData);
   if (!email || !password) {
