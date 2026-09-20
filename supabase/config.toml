@@ -158,13 +158,15 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://localhost:3000"
+site_url = "https://revi-rouge.vercel.app"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-# Mirrors the linked remote project's current value (empty — the
-# email+password flow doesn't redirect through email links at all).
-additional_redirect_urls = []
+# Needed since Etapa 19 (forgot password): resetPasswordForEmail's redirectTo
+# must be in this allow-list or Supabase silently falls back to site_url,
+# which broke the production reset-password link. Includes the local dev
+# target too, since this project's dev and prod share one Supabase instance.
+additional_redirect_urls = ["http://localhost:3000/reset-password"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
