@@ -435,7 +435,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 5 — Migration do schema base
 
-- [ ] **Objetivo**: aplicar as tabelas `contents` e `review_logs` com todas as constraints de integridade descritas na seção "Schema do Supabase".
+- [x] **Objetivo**: aplicar as tabelas `contents` e `review_logs` com todas as constraints de integridade descritas na seção "Schema do Supabase".
 - **Arquivos/componentes envolvidos**: `supabase/migrations/0001_init.sql`.
 - **Alterações necessárias**:
   - Criar o arquivo de migration com o conteúdo exato descrito em "`supabase/migrations/0001_init.sql`" acima (extensão `pgcrypto`, tabelas, constraints, índices, trigger `updated_at` e RLS já habilitado).
