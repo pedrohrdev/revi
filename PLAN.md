@@ -452,7 +452,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 6 — RLS e função transacional `mark_content_reviewed` (com testes)
 
-- [ ] **Objetivo**: garantir isolamento entre usuários e atomicidade/concorrência da transição "marcar como revisado", validado por testes automatizados — sem depender de UI.
+- [x] **Objetivo**: garantir isolamento entre usuários e atomicidade/concorrência da transição "marcar como revisado", validado por testes automatizados — sem depender de UI.
 - **Arquivos/componentes envolvidos**: `supabase/migrations/0002_rls_and_rpc.sql`, `lib/database.types.ts`, `tests/helpers/fixtures.ts`, `tests/integration/rls.test.ts`, `tests/integration/review-flow.test.ts`.
 - **Alterações necessárias**:
   - Criar o arquivo de migration com o conteúdo exato descrito em "`supabase/migrations/0002_rls_and_rpc.sql`" acima (RLS de `contents` e `review_logs`, índice único anti-duplicidade, função `mark_content_reviewed`).
