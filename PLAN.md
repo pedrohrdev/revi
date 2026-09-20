@@ -182,7 +182,7 @@ A etapa "Marcar como revisado" **precisa** ser atômica e resistente a concorrê
 
 - **Next.js App Router (TypeScript)**: Server Components para leitura, **Server Actions** para mutações simples (criar, arquivar, resetar, editar — updates de uma linha só, sem necessidade de RPC). A mutação "marcar como revisado" é uma Server Action que chama a função Postgres `mark_content_reviewed` via RPC, para garantir atomicidade e controle de concorrência no banco.
 - **Supabase**: Auth (magic link) + Postgres com Row Level Security. Todo acesso a dados passa pelo Supabase client autenticado (`@supabase/ssr`); RLS garante isolamento por usuário. As Server Actions também verificam autenticação e validam entradas antes de tocar o banco (defesa em profundidade, não apenas RLS).
-- **Tailwind + shadcn/ui**: Button, Card, Input, Textarea, Tabs, Form, Label, Sonner (toasts). Usar as convenções atuais (Tailwind v4, configuração via CSS, sem `tailwind.config.js`; shadcn CLI detecta isso automaticamente).
+- **Tailwind + shadcn/ui**: Button, Card, Input, Textarea, Tabs, Label, Sonner (toasts), preset `base-nova` (Base UI). Sem `react-hook-form`/`zod`/componente `Form`: formulários usam `<form>` nativo com os componentes acima, validados nas Server Actions (Etapa 10). Usar as convenções atuais (Tailwind v4, configuração via CSS, sem `tailwind.config.js`; shadcn CLI detecta isso automaticamente).
 - **Vitest** para testes unitários e de integração.
 - Sem service role key no client; sem backend separado.
 - Deploy: Vercel, com variáveis de ambiente de produção e Supabase Auth configurado para o domínio publicado (Etapa 18).
@@ -398,11 +398,11 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 2 — Dependências, shadcn/ui e Vitest
 
-- [ ] **Objetivo**: ter as bibliotecas de UI, o SDK do Supabase e o runner de testes disponíveis no projeto.
+- [x] **Objetivo**: ter as bibliotecas de UI, o SDK do Supabase e o runner de testes disponíveis no projeto.
 - **Arquivos/componentes envolvidos**: `package.json`, `components.json`, `components/ui/*`, `vitest.config.ts`.
 - **Alterações necessárias**:
   - Instalar `@supabase/supabase-js` e `@supabase/ssr`.
-  - Inicializar shadcn/ui (detecta Tailwind v4 automaticamente) e adicionar os componentes: `button`, `card`, `input`, `textarea`, `tabs`, `form`, `label`, `sonner`.
+  - Inicializar shadcn/ui (detecta Tailwind v4 automaticamente) e adicionar os componentes: `button`, `card`, `input`, `textarea`, `tabs`, `label`, `sonner`. O preset padrão atual do CLI (`base-nova`, sobre Base UI) não possui um item `form` com arquivos (`react-hook-form`/`zod`) — decisão confirmada com o usuário: não adicionar essa dependência; formulários usam `<form>` nativo + os componentes acima (ver Etapas 13 e 15).
   - Instalar e configurar Vitest (`vitest.config.ts`, script `"test": "vitest run"` em `package.json`).
   - Criar as pastas `tests/unit` e `tests/integration` (vazias por enquanto); preparar a separação dos scripts unit/integration conforme a estratégia de testes.
 - **Critérios de conclusão**: `npm run test -- --passWithNoTests` executa nesta etapa sem testes; não habilitar essa tolerância permanentemente e exigir testes reais a partir da Etapa 3; componentes shadcn presentes em `components/ui`; build sem erros.
@@ -563,7 +563,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 - [ ] **Objetivo**: permitir cadastrar um novo conteúdo estudado pela UI.
 - **Arquivos/componentes envolvidos**: `app/contents/new/page.tsx`.
 - **Alterações necessárias**:
-  - Formulário (shadcn `Form`) com título (obrigatório), matéria (opcional), notas (opcional), data de estudo (default hoje, input de data não permite futuro no client como conveniência de UX — a validação real continua sendo a da Server Action).
+  - Formulário `<form>` nativo (usando `Input`, `Textarea`, `Label`, `Button` do shadcn, sem `react-hook-form`/`zod`) com título (obrigatório), matéria (opcional), notas (opcional), data de estudo (default hoje, input de data não permite futuro no client como conveniência de UX — a validação real continua sendo a da Server Action).
   - Submissão chama `createContent`; redireciona ao dashboard após sucesso; toast de confirmação ou de erro.
 - **Critérios de conclusão**: verificação manual — conteúdo criado aparece corretamente no dashboard/lista com `next_review_date` calculada conforme a Etapa 3/10; tentar submeter com data futura mostra erro.
 - **Dependências**: Etapas 8 e 10.
