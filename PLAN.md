@@ -101,6 +101,7 @@ Esse comportamento é intencional (cada intervalo cresce a partir da última rev
 - Cada etapa valida seu próprio resultado sem depender de UI futura. Usar `test:unit` = `vitest run tests/unit`, `test:integration` = `vitest run tests/integration` e `test` = `vitest run`, que descobre todos os testes existentes. Na Etapa 3 só existem unitários; a partir da Etapa 6, a execução completa inclui integração. Carregar/validar o ambiente do banco apenas no harness de integração, nunca no setup global dos unitários. Integração sem ambiente configurado falha com uma instrução clara, não passa silenciosamente.
 - Credenciais administrativas são exclusivas do harness de testes: criação/limpeza de usuários e fixtures. Todas as operações sob teste usam sessões comuns, sujeitas a RLS. Não usar credenciais administrativas da produção.
 - **Sem Docker**: usar um projeto remoto de desenvolvimento dedicado e identificado explicitamente, com credenciais administrativas desse projeto somente no harness. Os critérios de stack local passam a exigir conectividade e migrations desse ambiente. Não executar `db reset` remoto; limpar somente usuários e dados criados pela suíte, em `finally`/teardown. Não confundir esse projeto com produção.
+  - **Decisão tomada na Etapa 4**: a máquina de desenvolvimento estava com memória/swap esgotados para rodar a stack local via Docker com segurança; o usuário optou pelo caminho remoto. Projeto de desenvolvimento dedicado: `Revi` (ref `aimcowhpirmypxevhtfv`, org `jludrxhsnpidjprdwqun`), vinculado via `supabase link`. Esse é o alvo permitido em `.env.local`/`.env.test.local` (`SUPABASE_TEST_PROJECT_REF`) para todas as etapas seguintes — nunca usar `supabase db reset` contra ele.
 - Configurar `.env.test.local` ignorado pelo Git, contendo URL, chave pública e chave administrativa do ambiente de teste. O harness carrega esse arquivo explicitamente e exige um alvo local ou um project ref de desenvolvimento permitido; recusa o ref de produção. `.env.example` contém somente nomes e valores vazios.
 
 ### Fixtures de tempo e testes do ciclo
@@ -421,7 +422,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 4 — Ambiente Supabase de desenvolvimento
 
-- [ ] **Objetivo**: preparar o banco e Auth de desenvolvimento/testes, sem provisionar produção.
+- [x] **Objetivo**: preparar o banco e Auth de desenvolvimento/testes, sem provisionar produção.
 - **Arquivos/componentes envolvidos**: `supabase/config.toml`, `.env.local`, `.env.test.local`, `.env.example` e configuração de carregamento do ambiente de testes.
 - **Alterações necessárias**:
   - Instalar a Supabase CLI por um método suportado e registrar sua versão; rodar `supabase init`.
