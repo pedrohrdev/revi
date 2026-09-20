@@ -513,7 +513,7 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 10 — Server Actions (mutações), com autenticação, validação e testes
 
-- [ ] **Objetivo**: implementar todas as escritas do sistema, com autenticação e validação na própria action, e cobertura de teste completa do ciclo de negócio — sem depender de UI.
+- [x] **Objetivo**: implementar todas as escritas do sistema, com autenticação e validação na própria action, e cobertura de teste completa do ciclo de negócio — sem depender de UI.
 - **Arquivos/componentes envolvidos**: `app/contents/actions.ts`, `tests/integration/actions.test.ts`.
 - **Alterações necessárias**:
   - Todas as actions verificam que há um usuário autenticado (via `lib/supabase/server.ts`); se não houver, retornam erro (não devem ser alcançáveis sem sessão, mas a checagem é defesa em profundidade).

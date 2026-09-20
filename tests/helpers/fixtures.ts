@@ -82,7 +82,9 @@ export function adminClient(): SupabaseClient<Database> {
   });
 }
 
-function anonClient(): SupabaseClient<Database> {
+// Exported for tests that need an explicitly unauthenticated client (e.g.
+// confirming a Server Action rejects a session-less caller).
+export function anonClient(): SupabaseClient<Database> {
   const { url, anonKey } = assertAllowedTestProject();
   return createClient<Database>(url, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
