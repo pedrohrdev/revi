@@ -2,8 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/database.types";
 
-// Runs on every route except /login, /auth/callback, and static assets (see
-// `matcher` below) — so any path it does run on is a protected route and an
+// Runs on every route except /login and static assets (see `matcher`
+// below) — so any path it does run on is a protected route and an
 // unauthenticated visitor is always redirected to /login.
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -46,6 +46,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!login|auth/callback|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!login|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

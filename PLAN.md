@@ -16,7 +16,7 @@ Projeto começou vazio (greenfield). O repositório já contém este `PLAN.md` �
 
 - **Unidade de conteúdo**: tópico de estudo (título + matéria opcional + notas), **não** flashcard de pergunta/resposta.
 - **Algoritmo de revisão**: intervalos fixos `[1, 3, 7, 15, 30]` dias, sem fator de facilidade adaptativo (sem SM-2 completo). Ver semântica exata em "Convenções técnicas transversais".
-- **Autenticação**: magic link por e-mail via Supabase Auth (sem senha).
+- **Autenticação**: e-mail + senha via Supabase Auth, **sem confirmação de e-mail** (`signUp` já ativa a conta na hora, sem clique em link nenhum). *Revisado em 2026-09-20*: a decisão original era magic link (sem senha); o usuário pediu explicitamente a troca para "registro e login normal sem confirmação de e-mail" depois de testar o magic link na prática (Etapa 8 esbarrou repetidamente no limite de envio do e-mail padrão do Supabase). Trade-off de segurança aceito conscientemente: sem confirmação, não há garantia de que quem cadastra um e-mail é o dono dele. Efeito colateral bem-vindo: **elimina a necessidade de SMTP em produção** (Etapa 18) e de qualquer configuração de redirect/callback — não há mais e-mail nenhum no fluxo de autenticação.
 - **Fuso horário oficial do MVP**: `America/Sao_Paulo`. Todo conceito de "hoje" no produto (datas de revisão, validação de datas futuras, bloqueio de revisão duplicada no mesmo dia) usa esse fuso, independentemente do fuso do navegador do usuário ou do servidor.
 - **Revisão antecipada**: permitida, limitada a **uma revisão por conteúdo por dia** em `America/Sao_Paulo`, mesmo antes de `next_review_date`. Essa é uma regra de produto, além de uma proteção contra duplicidade. Reset não libera uma segunda revisão no mesmo dia; nesse caso, é necessário aguardar o próximo dia.
 - **Conteúdos dominados (`mastered`)**: não podem ser revisados novamente até serem resetados.
@@ -32,14 +32,14 @@ Projeto começou vazio (greenfield). O repositório já contém este `PLAN.md` �
 ## Escopo do MVP
 
 **Dentro do MVP:**
-- Login/cadastro via magic link.
+- Login/cadastro via e-mail e senha, sem confirmação de e-mail.
 - Cadastrar um conteúdo estudado (título, matéria opcional, notas opcionais, data de estudo).
 - Dashboard com conteúdos "para revisar hoje".
 - Marcar conteúdo como revisado (a qualquer momento, inclusive antecipadamente) → avança automaticamente para o próximo intervalo, ou marca como dominado no último intervalo.
 - Listar todos os conteúdos (ativos / dominados / arquivados).
 - Ver histórico de revisões de um conteúdo.
 - Editar (título/matéria/notas), arquivar e resetar um conteúdo.
-- Deploy funcional em produção na Vercel, incluindo configuração de SMTP para entregar os magic links a usuários externos à equipe do projeto.
+- Deploy funcional em produção na Vercel. Sem SMTP: o fluxo de e-mail+senha sem confirmação não envia e-mail nenhum, então nenhum provedor de e-mail é necessário para o login funcionar com usuários externos.
 
 **Fora do MVP (explicitamente adiado, não implementar agora):**
 - Flashcards / auto-teste ativo.
@@ -52,7 +52,7 @@ Projeto começou vazio (greenfield). O repositório já contém este `PLAN.md` �
 
 ## Fluxo do usuário
 
-1. Usuário acessa o app, informa e-mail, recebe magic link, entra.
+1. Usuário acessa o app; se é a primeira vez, cria uma conta com e-mail e senha (fica logado na hora, sem confirmação); se já tem conta, entra com e-mail e senha.
 2. Cai no **Dashboard**: vê lista "Para revisar hoje" (pode estar vazia) e lista geral de conteúdos ativos ordenados pela próxima data de revisão.
 3. Clica em "Novo conteúdo" → preenche título (obrigatório), matéria (opcional), notas (opcional), data de estudo (default hoje, não pode ser futura) → salva. Sistema calcula `next_review_date = studied_at + 1 dia`.
 4. A qualquer momento (inclusive antes da data prevista, respeitando o limite de uma revisão por conteúdo por dia), usuário pode abrir um conteúdo `active` e clicar em "Marcar como revisado" → sistema avança o índice de intervalo e recalcula a próxima data, ou marca como dominado se era o último intervalo.
@@ -127,7 +127,7 @@ Na Etapa 10, importar as actions no Vitest e substituir apenas as fronteiras do 
 - Local: `supabase start` e `supabase db reset` em banco descartável de desenvolvimento. Remoto dedicado: verificar o project ref antes de `supabase link --project-ref <ref>` e `supabase db push`. O comando `db reset` deste plano é exclusivamente local.
 - Aplicar `0002` no mesmo ambiente em que o app será executado antes da Etapa 7. Em produção, aplicar todas as migrations na Etapa 18, antes de disponibilizar a aplicação.
 - Gerar `lib/database.types.ts` após a Etapa 6 (`supabase gen types typescript --local --schema public`, ou `--project-id <ref-dev>` na alternativa remota). Regenerar após mudanças de schema/RPC e tipar os clients com `Database`.
-- Configuração local de Auth vive em `supabase/config.toml`; e-mails locais são capturados na caixa de testes indicada por `supabase status`, sem entrega externa. Configuração remota de Auth e SMTP é feita no painel e descrita na etapa correspondente.
+- Configuração local de Auth vive em `supabase/config.toml`, aplicada ao ambiente remoto dedicado via `supabase config push` (sempre revisar `supabase config diff` antes — o comando opera no arquivo inteiro, não por campo, e pode sobrescrever configurações reais não relacionadas à mudança pretendida; mascara segredos como `auth.sms.twilio.auth_token`/`auth.external.apple.secret` e se recusa a desativar um provedor de SMS já ativo). *Revisado em 2026-09-20*: como a autenticação passou a ser e-mail+senha sem confirmação, não há mais e-mail nenhum no fluxo de login — a menção original a SMTP/caixa de testes de e-mail não se aplica mais.
 - Verificar Advisors no painel quando houver projeto remoto. Ausência de painel no stack local não bloqueia validação local; a checagem remota é obrigatória antes de concluir a Etapa 18.
 
 ### Limite da garantia de integridade
@@ -182,7 +182,7 @@ A etapa "Marcar como revisado" **precisa** ser atômica e resistente a concorrê
 ## Arquitetura
 
 - **Next.js App Router (TypeScript)**: Server Components para leitura, **Server Actions** para mutações simples (criar, arquivar, resetar, editar — updates de uma linha só, sem necessidade de RPC). A mutação "marcar como revisado" é uma Server Action que chama a função Postgres `mark_content_reviewed` via RPC, para garantir atomicidade e controle de concorrência no banco.
-- **Supabase**: Auth (magic link) + Postgres com Row Level Security. Todo acesso a dados passa pelo Supabase client autenticado (`@supabase/ssr`); RLS garante isolamento por usuário. As Server Actions também verificam autenticação e validam entradas antes de tocar o banco (defesa em profundidade, não apenas RLS).
+- **Supabase**: Auth (e-mail + senha, sem confirmação de e-mail) + Postgres com Row Level Security. Todo acesso a dados passa pelo Supabase client autenticado (`@supabase/ssr`); RLS garante isolamento por usuário. As Server Actions também verificam autenticação e validam entradas antes de tocar o banco (defesa em profundidade, não apenas RLS).
 - **Tailwind + shadcn/ui**: Button, Card, Input, Textarea, Tabs, Label, Sonner (toasts), preset `base-nova` (Base UI). Sem `react-hook-form`/`zod`/componente `Form`: formulários usam `<form>` nativo com os componentes acima, validados nas Server Actions (Etapa 10). Usar as convenções atuais (Tailwind v4, configuração via CSS, sem `tailwind.config.js`; shadcn CLI detecta isso automaticamente).
 - **Vitest** para testes unitários e de integração.
 - Sem service role key no client; sem backend separado.
@@ -194,8 +194,8 @@ A etapa "Marcar como revisado" **precisa** ser atômica e resistente a concorrê
 app/
   layout.tsx
   page.tsx                     // Dashboard
-  login/page.tsx
-  auth/callback/route.ts
+  login/page.tsx               // tabs Entrar/Criar conta
+  login/actions.ts              // signIn/signUp (email+senha, sem confirmação)
   contents/
     page.tsx                   // lista (tabs ativos/dominados/arquivados)
     new/page.tsx
@@ -479,23 +479,24 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 - **Alterações necessárias**:
   - `lib/supabase/client.ts`: client Supabase para uso em Client Components.
   - `lib/supabase/server.ts`: client Supabase para Server Components/Actions, usando cookies (`@supabase/ssr`) e a API assíncrona do Next.js instalado. Tipar ambos os clients com `Database` gerado na Etapa 6.
-  - `proxy.ts`: validar/renovar sessão conforme a integração atual do `@supabase/ssr`, propagando cookies; redirecionar para `/login` sem autenticação. Excluir login/callback e assets estáticos do matcher. Não confiar apenas em `getSession` para autorizar acesso; usar a validação recomendada pelo SDK, mantendo autenticação nas actions e RLS.
+  - `proxy.ts`: validar/renovar sessão conforme a integração atual do `@supabase/ssr`, propagando cookies; redirecionar para `/login` sem autenticação. Excluir `/login` e assets estáticos do matcher (`/auth/callback` foi removido do matcher na revisão da Etapa 8 — a rota não existe mais, já que o fluxo de e-mail+senha sem confirmação não usa callback). Não confiar apenas em `getSession` para autorizar acesso; usar a validação recomendada pelo SDK, mantendo autenticação nas actions e RLS.
 - **Critérios de conclusão**: com o dev server rodando, uma requisição não autenticada a uma rota protegida (ex: `/`) retorna redirect temporário para `/login` (normalmente 307; verificar status e `Location`, sem exigir 302) — verificável via `curl -I` ou teste automatizado, sem depender da página de login existir visualmente.
 - **Dependências**: Etapas 4 e 6.
 
-### Etapa 8 — Autenticação (magic link)
+### Etapa 8 — Autenticação (e-mail + senha, sem confirmação)
 
-- [x] **Objetivo**: usuário consegue entrar no app via link mágico por e-mail, incluindo tratamento de erros e configuração de produção documentada.
-- **Arquivos/componentes envolvidos**: `app/login/page.tsx`, `app/auth/callback/route.ts`, ação de logout (`app/actions.ts` ou similar).
+> **Revisada em 2026-09-20.** A versão original desta etapa implementava magic link (ver decisão original preservada no histórico do PLAN.md/git). O usuário testou esse fluxo na prática, esbarrou repetidamente no limite de envio do e-mail padrão do Supabase (agravado pelas tentativas de teste desta sessão) e pediu a troca para e-mail+senha sem confirmação — ver a decisão registrada em "Decisões de produto confirmadas". O texto abaixo já descreve a versão revisada, efetivamente implementada.
+
+- [x] **Objetivo**: usuário consegue criar conta e entrar no app com e-mail e senha, sem etapa de confirmação por e-mail.
+- **Arquivos/componentes envolvidos**: `app/login/page.tsx`, `app/login/actions.ts`, ação de logout (`app/actions.ts`).
 - **Alterações necessárias**:
-  - `app/login/page.tsx`: formulário de e-mail que chama `supabase.auth.signInWithOtp({ email, options: { emailRedirectTo } })`.
-  - `app/auth/callback/route.ts`: route handler que troca o código (fluxo PKCE) pela sessão via `exchangeCodeForSession`; em caso de erro (link expirado/inválido), redireciona para `/login?error=link_expired`.
-  - `app/login/page.tsx` exibe uma mensagem amigável quando `?error=link_expired` está presente, com opção de reenviar o link.
-  - Ação de logout (`supabase.auth.signOut`) acessível na UI (botão no layout autenticado).
-  - No ambiente local, configurar `site_url` como `http://localhost:3000` e permitir `http://localhost:3000/auth/callback` em `supabase/config.toml`; aplicar a configuração conforme a CLI. Na alternativa remota, configurar os mesmos valores no painel Auth. Manter o template padrão com `ConfirmationURL` compatível com PKCE/code, usando o mesmo navegador que iniciou o login; não misturar esse fluxo com template `token_hash`/`verifyOtp`.
-  - Localmente, abrir o magic link pela caixa de e-mails de teste do stack. No remoto de desenvolvimento, o SMTP padrão só entrega a e-mails autorizados da equipe e tem limites; usar uma conta autorizada ou configurar SMTP nesse ambiente se necessário. SMTP de produção é obrigatório na Etapa 18 para usuários externos.
-- **Critérios de conclusão**: fluxo completo testado manualmente no navegador — enviar e-mail, clicar no link, cair autenticado no dashboard (mesmo que o dashboard ainda seja uma página mínima/placeholder); link expirado/inválido redireciona para `/login` com mensagem de erro; logout funciona e volta para `/login`.
-  - **Nota de verificação (2026-09-20)**: o clique real no e-mail não foi confirmado de ponta a ponta — as tentativas esbarraram no limite de envio do provedor de e-mail padrão do Supabase para o ambiente de dev (já previsto acima: "SMTP padrão... tem limites"), agravado pelas várias tentativas de teste nesta sessão. Evidências fortes de que o fluxo está correto: (1) `signInWithOtp` aceito sem erro fora do limite; (2) a Server Action grava corretamente o cookie `sb-...-code-verifier` (PKCE); (3) um `?code=` real chegou em `/auth/callback` a partir de um clique real em e-mail; (4) `/auth/callback` sem código redireciona corretamente para `/login?error=link_expired`. Se o login falhar num uso real, checar primeiro se é o mesmo limite de e-mail (considerar adiantar SMTP customizado da Etapa 18 para o ambiente de dev).
+  - `app/login/page.tsx`: uma página com duas abas (shadcn Tabs) — "Entrar" e "Criar conta" — cada uma com seu próprio formulário nativo (e-mail + senha) e sua própria Server Action.
+  - `app/login/actions.ts`: `signIn` chama `supabase.auth.signInWithPassword({ email, password })`; `signUp` chama `supabase.auth.signUp({ email, password })`. Como `auth.email.enable_confirmations = false` no projeto (ver abaixo), `signUp` sempre retorna uma sessão ativa ou um erro — nunca um estado "confirme seu e-mail" pendente.
+  - Erros mapeados por código (`error.code`, não por mensagem): `invalid_credentials` (login) → "E-mail ou senha inválidos" (mensagem genérica de propósito — Supabase não diferencia "e-mail não existe" de "senha errada", por segurança); `user_already_exists` (cadastro) → "Este e-mail já tem uma conta"; `weak_password` → "A senha precisa ter pelo menos 6 caracteres" (`minimum_password_length` do Supabase).
+  - Ação de logout (`supabase.auth.signOut`) acessível na UI (botão no layout autenticado) — inalterada por esta revisão.
+  - **Sem callback, sem PKCE, sem redirect URL, sem SMTP**: como não há e-mail nenhum no fluxo, `app/auth/callback/route.ts` foi removida (existia só para o fluxo de código do magic link) e o matcher do `proxy.ts` não precisa mais excluir `/auth/callback`. `auth.email.enable_confirmations` foi desativado no projeto de dev via `supabase config push` — revisar sempre `supabase config diff` antes de rodar esse comando num projeto real (ver nota em "Migrations e provisionamento sem MCP"); nesse push específico, o próprio CLI recusou automaticamente desativar o Twilio (não deixa desligar um provedor de SMS ativo por essa via) e não enviou os campos de segredo mascarados, então o único campo realmente alterado no remoto foi `enable_confirmations`.
+- **Critérios de conclusão**: fluxo completo testado — criar conta ativa a sessão na hora (sem clicar em nada); entrar com credenciais corretas funciona; senha errada e e-mail duplicado no cadastro mostram erro correto; logout funciona e volta para `/login`.
+  - **Resultado (2026-09-20)**: diferente da versão com magic link, esse fluxo **não depende de e-mail real nenhum**, então deu para automatizar de ponta a ponta via `curl` (POST multipart replicando a codificação de Server Action do Next.js, com cookie jar) contra o dev server local: `signUp` cria a conta, já retorna com o cookie de sessão real setado (sem clique em nada); com esse cookie, `GET /` responde `200` (não redireciona) e mostra o e-mail do usuário + botão "Sair" no header; `signOut` limpa os cookies de sessão e uma requisição seguinte já volta a redirecionar para `/login`; `signIn` com a mesma senha funciona; senha errada retorna exatamente `?error=invalid_credentials`; cadastro duplicado retorna exatamente `?error=user_already_exists`; as duas mensagens de erro renderizam corretamente na aba certa. Um erro transitório (`"JWT issued at future"`, skew de relógio entre os serviços do Supabase) apareceu uma vez logo após o cadastro e se resolveu sozinho em ~3s numa nova tentativa — não é um bug do app. Usuários de teste limpos via API admin depois.
 - **Dependências**: Etapa 7.
 
 ### Etapa 9 — Camada de dados (queries)
@@ -621,23 +622,24 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
   - **Resultado (2026-09-20)**:
     - `npm run test`: 66/66 (35 unit + 31 integration), banco de dev confirmado sem sobra de fixtures depois.
     - `npm run lint`: sem erros. `npm run build`: sem erros, todas as 8 rotas geradas.
-    - `npx supabase db advisors --linked --type all`: 8 achados, todos `WARN`/`INFO` — nenhum `ERROR`. `auth_leaked_password_protection` (WARN) não se aplica (o MVP não usa senha, só magic link). `unindexed_foreign_keys` em `review_logs.user_id` (INFO) e 6x `auth_rls_initplan` sugerindo trocar `auth.uid()` por `(select auth.uid())` nas policies (WARN, só performance em escala) — nenhum dos dois é bug de correção ou segurança; ambos exigiriam uma nova migration, fora do escopo desta etapa ("apenas validação"); ficam registrados aqui como possível follow-up pós-MVP.
+    - `npx supabase db advisors --linked --type all`: 8 achados, todos `WARN`/`INFO` — nenhum `ERROR`. `unindexed_foreign_keys` em `review_logs.user_id` (INFO) e 6x `auth_rls_initplan` sugerindo trocar `auth.uid()` por `(select auth.uid())` nas policies (WARN, só performance em escala) — nenhum dos dois é bug de correção ou segurança; ambos exigiriam uma nova migration, fora do escopo desta etapa ("apenas validação"); ficam registrados aqui como possível follow-up pós-MVP. `auth_leaked_password_protection` (WARN) — na época desta etapa não se aplicava (autenticação era magic link, sem senha); **passou a ser relevante depois da revisão da Etapa 8 para e-mail+senha** (2026-09-20) e não está exposta em `supabase/config.toml` (não encontrada no schema declarativo do CLI), então fica registrada aqui como recomendação de segurança pós-MVP a ativar manualmente no painel (Authentication → Auth → Password) em vez de assumida silenciosamente.
     - Walkthrough "pela UI" não pôde ser feito ao vivo (mesma limitação documentada nas Etapas 8, 11–16: token bruto do magic link não é recuperável do banco). Em vez disso, cada cenário pedido já está coberto por teste automatizado que exercita a pilha real (Server Action → RLS → RPC/Postgres): login (Etapa 8, verificado por código), criação (`actions.test.ts`), revisão antecipada e bloqueio diário mesmo após reset (`actions.test.ts` "allows an early review, but rejects a second one the same day — even after reset"), histórico preservado (`actions.test.ts` "reactivates a mastered content... preserves history"), arquivamento e bloqueio de revisão em arquivado (`actions.test.ts` "rejects marking an archived content as reviewed"), bloqueio em dominado (`review-flow.test.ts` "rejects marking a %s content as reviewed" para mastered/archived), ciclo completo até dominado usando o índice 4 preparado pelo harness (`review-flow.test.ts` e `actions.test.ts`, ambos "walks the full 5-review cycle to mastery").
 - **Dependências**: Etapas 1–16.
 
 ### Etapa 18 — Deploy na Vercel (produção)
 
-- [ ] **Objetivo**: publicar o MVP com login funcionando também para usuários externos à equipe do Supabase.
-- **Arquivos/componentes envolvidos**: configuração da Vercel, projeto Supabase de produção, Auth URLs e SMTP. Não salvar segredos de produção em arquivos versionados.
+> **Revisada em 2026-09-20** junto com a Etapa 8: como a autenticação passou a ser e-mail+senha sem confirmação (sem e-mail nenhum no fluxo), esta etapa não depende mais de SMTP nem de configuração de callback/redirect — simplificação bem-vinda em relação à versão original (magic link).
+
+- [ ] **Objetivo**: publicar o MVP com login funcionando para qualquer usuário, sem depender da equipe do Supabase.
+- **Arquivos/componentes envolvidos**: configuração da Vercel, projeto Supabase de produção, Auth URLs. Não salvar segredos de produção em arquivos versionados.
 - **Alterações necessárias**:
   - Criar/selecionar no painel o projeto Supabase de produção, separado do ambiente de testes. Obter ref, URL e chave pública. Conferir explicitamente o ref antes de vincular a CLI e executar `supabase db push` com **todas** as migrations; não disponibilizar o app com schema parcial.
+  - Aplicar a mesma mudança de configuração de Auth da Etapa 8 (`auth.email.enable_confirmations = false`) ao projeto de produção via `supabase config push --project-ref <ref-produção>`, revisando `supabase config diff` antes (mesmo cuidado documentado na Etapa 8 — o comando opera no arquivo inteiro).
   - Verificar RLS, policies, RPC e Advisors no projeto de produção antes de disponibilizar o app. Não rodar `db reset`, harness administrativo ou fixtures de tempo em produção.
-  - Configurar um provedor SMTP em Authentication → SMTP Settings, com credenciais e remetente válidos e verificação de domínio exigida pelo provedor. Escolher o serviço com o usuário se ainda não houver um; não contratar serviço pago sem autorização. A etapa não está concluída sem entrega real de magic links a destinatários externos à equipe.
   - Publicar com a Vercel CLI a partir do projeto local ou conectar um repositório remoto já publicado. Configurar `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` do projeto de produção antes do build final. A criação de remoto Git não é pré-requisito se for usada a CLI.
-  - Conhecido o domínio final, configurar Site URL como a origem HTTPS e permitir a URL exata `/auth/callback` no Supabase de produção. Não misturar credenciais e callbacks de ambientes distintos.
-  - Validar login e logout no domínio real, incluindo entrega de e-mail a um usuário externo à equipe; criar, revisar uma vez, arquivar e resetar conteúdo de smoke test por fluxos normais. Confirmar que uma segunda conta não lê nem altera os dados da primeira. Não tentar repetir as cinco revisões no mesmo dia em produção.
-- **Critérios de conclusão**: aplicação acessível na Vercel, migrations completas, nenhum Advisor crítico, SMTP e magic link funcionais para usuários externos, fluxo de smoke test e isolamento entre usuários confirmados.
-- **Dependências**: Etapa 17; acesso às contas Supabase/Vercel e configuração de SMTP/remetente. Essas dependências operacionais não bloqueiam a Etapa 1.
+  - Validar cadastro, login e logout no domínio real (não precisa de e-mail externo nenhum, já que não há confirmação); criar, revisar uma vez, arquivar e resetar conteúdo de smoke test por fluxos normais. Confirmar que uma segunda conta não lê nem altera os dados da primeira. Não tentar repetir as cinco revisões no mesmo dia em produção.
+- **Critérios de conclusão**: aplicação acessível na Vercel, migrations completas, nenhum Advisor crítico, cadastro/login/logout funcionais para qualquer usuário, fluxo de smoke test e isolamento entre usuários confirmados.
+- **Dependências**: Etapa 17; acesso às contas Supabase/Vercel. Essas dependências operacionais não bloqueiam a Etapa 1.
 
 ## Observações para o agente que for implementar
 
@@ -659,5 +661,5 @@ Esta seção registra as decisões do plano, não resultados de testes da aplica
 - **Testes executáveis**: paridade SQL/TypeScript, fixtures administrativas somente em desenvolvimento, estados finais e erros concorrentes definidos, mocks somente das fronteiras Next.js nas actions.
 - **Ambientes**: desenvolvimento local por padrão; alternativa remota dedicada consistente com permissões e critérios. Produção recebe todas as migrations somente na etapa final.
 - **Tipagem**: geração dos tipos do banco e RPC na Etapa 6.
-- **Auth e publicação**: fluxo PKCE/code com template compatível, `proxy.ts`, configuração de cookies e redirects; SMTP para usuários externos é requisito de conclusão em produção.
-- **Pré-requisitos**: Etapa 1 depende apenas do ambiente Node/npm e acesso ao registry; Docker/Supabase entram na Etapa 4, contas de produção e SMTP na Etapa 18. Nenhuma etapa foi executada por esta revisão.
+- **Auth e publicação**: *(desatualizado pela revisão de 2026-09-20 — ver Etapa 8)* a versão original desta seção descrevia um fluxo PKCE/code com template e SMTP obrigatório em produção; a autenticação passou a ser e-mail+senha sem confirmação, sem callback, sem PKCE e sem SMTP nenhum.
+- **Pré-requisitos**: Etapa 1 depende apenas do ambiente Node/npm e acesso ao registry; Docker/Supabase entram na Etapa 4, contas de produção na Etapa 18 (sem SMTP — ver nota acima). Nenhuma etapa foi executada por esta revisão original do PLAN.md.

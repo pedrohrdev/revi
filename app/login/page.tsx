@@ -5,64 +5,110 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signInWithMagicLink } from "./actions";
+import { signIn, signUp } from "./actions";
 
 const ERROR_MESSAGES: Record<string, string> = {
-  link_expired: "O link expirou ou já foi usado. Peça um novo abaixo.",
-  missing_email: "Informe um e-mail.",
-  send_failed: "Não foi possível enviar o link agora. Tente novamente.",
+  missing_fields: "Preencha e-mail e senha.",
+  invalid_credentials: "E-mail ou senha inválidos.",
+  user_already_exists: "Este e-mail já tem uma conta. Tente entrar.",
+  weak_password: "A senha precisa ter pelo menos 6 caracteres.",
+  signup_failed: "Não foi possível criar a conta. Tente novamente.",
 };
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; sent?: string }>;
+  searchParams: Promise<{ error?: string; tab?: string }>;
 }) {
   const params = await searchParams;
   const errorMessage = params.error
     ? (ERROR_MESSAGES[params.error] ?? "Algo deu errado. Tente novamente.")
     : null;
-  const wasSent = params.sent === "1";
+  const activeTab = params.tab === "signup" ? "signup" : "login";
 
   return (
     <main className="flex flex-1 items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Entrar no Revi</CardTitle>
+          <CardTitle>Revi</CardTitle>
           <CardDescription>
-            Informe seu e-mail e enviaremos um link para entrar, sem senha.
+            Entre ou crie sua conta para organizar suas revisões.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {wasSent ? (
-            <p className="text-sm text-muted-foreground">
-              Link enviado! Confira sua caixa de entrada e clique no link para
-              entrar.
-            </p>
-          ) : (
-            <form action={signInWithMagicLink} className="space-y-4">
-              {errorMessage ? (
-                <p className="text-sm text-destructive">{errorMessage}</p>
-              ) : null}
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  placeholder="voce@exemplo.com"
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                Enviar link mágico
-              </Button>
-            </form>
-          )}
+          <Tabs defaultValue={activeTab}>
+            <TabsList className="w-full">
+              <TabsTrigger value="login">Entrar</TabsTrigger>
+              <TabsTrigger value="signup">Criar conta</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="login">
+              <form action={signIn} className="space-y-4 pt-4">
+                {activeTab === "login" && errorMessage ? (
+                  <p className="text-sm text-destructive">{errorMessage}</p>
+                ) : null}
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">E-mail</Label>
+                  <Input
+                    id="login-email"
+                    name="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="login-password">Senha</Label>
+                  <Input
+                    id="login-password"
+                    name="password"
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                  />
+                </div>
+                <Button type="submit" className="w-full">
+                  Entrar
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="signup">
+              <form action={signUp} className="space-y-4 pt-4">
+                {activeTab === "signup" && errorMessage ? (
+                  <p className="text-sm text-destructive">{errorMessage}</p>
+                ) : null}
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">E-mail</Label>
+                  <Input
+                    id="signup-email"
+                    name="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Senha</Label>
+                  <Input
+                    id="signup-password"
+                    name="password"
+                    type="password"
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                  />
+                </div>
+                <Button type="submit" className="w-full">
+                  Criar conta
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </main>
