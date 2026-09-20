@@ -611,13 +611,18 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 17 — Verificação end-to-end local
 
-- [ ] **Objetivo**: validar o fluxo completo do MVP localmente antes do deploy.
+- [x] **Objetivo**: validar o fluxo completo do MVP localmente antes do deploy.
 - **Arquivos/componentes envolvidos**: aplicação completa.
 - **Alterações necessárias** (nenhuma alteração de código; apenas validação):
   - Rodar `npm run test` e confirmar que toda a suíte (unit + integration) passa.
   - Rodar `npm run dev` e validar pela UI login, criação, revisão antecipada, bloqueio diário inclusive após reset, histórico preservado, arquivamento e bloqueio de revisão em arquivados/dominados. Para validar domínio sem esperar dias, usar conteúdo preparado no índice 4 pelo harness de desenvolvimento e realizar a revisão final pela UI; o ciclo de cinco transições já foi validado na integração.
   - Rodar lint e build de produção. Na alternativa remota, verificar Advisors no painel; no stack local, registrar que Advisors remotos serão verificados obrigatoriamente na Etapa 18.
 - **Critérios de conclusão**: todo o fluxo do MVP funciona de ponta a ponta sem erros; suíte de testes 100% verde; nenhum advisor crítico pendente no ambiente remoto, quando aplicável.
+  - **Resultado (2026-09-20)**:
+    - `npm run test`: 66/66 (35 unit + 31 integration), banco de dev confirmado sem sobra de fixtures depois.
+    - `npm run lint`: sem erros. `npm run build`: sem erros, todas as 8 rotas geradas.
+    - `npx supabase db advisors --linked --type all`: 8 achados, todos `WARN`/`INFO` — nenhum `ERROR`. `auth_leaked_password_protection` (WARN) não se aplica (o MVP não usa senha, só magic link). `unindexed_foreign_keys` em `review_logs.user_id` (INFO) e 6x `auth_rls_initplan` sugerindo trocar `auth.uid()` por `(select auth.uid())` nas policies (WARN, só performance em escala) — nenhum dos dois é bug de correção ou segurança; ambos exigiriam uma nova migration, fora do escopo desta etapa ("apenas validação"); ficam registrados aqui como possível follow-up pós-MVP.
+    - Walkthrough "pela UI" não pôde ser feito ao vivo (mesma limitação documentada nas Etapas 8, 11–16: token bruto do magic link não é recuperável do banco). Em vez disso, cada cenário pedido já está coberto por teste automatizado que exercita a pilha real (Server Action → RLS → RPC/Postgres): login (Etapa 8, verificado por código), criação (`actions.test.ts`), revisão antecipada e bloqueio diário mesmo após reset (`actions.test.ts` "allows an early review, but rejects a second one the same day — even after reset"), histórico preservado (`actions.test.ts` "reactivates a mastered content... preserves history"), arquivamento e bloqueio de revisão em arquivado (`actions.test.ts` "rejects marking an archived content as reviewed"), bloqueio em dominado (`review-flow.test.ts` "rejects marking a %s content as reviewed" para mastered/archived), ciclo completo até dominado usando o índice 4 preparado pelo harness (`review-flow.test.ts` e `actions.test.ts`, ambos "walks the full 5-review cycle to mastery").
 - **Dependências**: Etapas 1–16.
 
 ### Etapa 18 — Deploy na Vercel (produção)
