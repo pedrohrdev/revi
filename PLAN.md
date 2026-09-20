@@ -587,12 +587,13 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
 
 ### Etapa 15 — Edição de conteúdo
 
-- [ ] **Objetivo**: permitir editar título/matéria/notas de um conteúdo existente.
+- [x] **Objetivo**: permitir editar título/matéria/notas de um conteúdo existente.
 - **Arquivos/componentes envolvidos**: `app/contents/[id]/edit/page.tsx`.
 - **Alterações necessárias**:
   - Formulário pré-preenchido com os dados atuais (sem campo de `studied_at`, que não é editável — ver "Fora do MVP").
   - Submissão chama `updateContent`; redireciona de volta ao detalhe; toast de confirmação.
 - **Critérios de conclusão**: verificação manual — edição persiste corretamente e é refletida na página de detalhe.
+  - **Nota de verificação (2026-09-20)**: mesma limitação das etapas de UI anteriores. `updateContent` já tem cobertura de teste completa (Etapa 10, incluindo rejeição de título vazio); build type-checa o formulário (pré-preenchido a partir de `getContentById`, já testado na Etapa 9) contra essa action; lint limpo; rota confirmada redirecionando para `/login` sem sessão.
 - **Dependências**: Etapas 10 e 14.
 
 ### Etapa 16 — Polimento de UI
