@@ -44,6 +44,7 @@ export type Database = {
           created_at: string
           id: string
           interval_index: number
+          last_reviewed_at: string | null
           next_review_date: string | null
           notes: string | null
           status: string
@@ -57,6 +58,7 @@ export type Database = {
           created_at?: string
           id?: string
           interval_index?: number
+          last_reviewed_at?: string | null
           next_review_date?: string | null
           notes?: string | null
           status?: string
@@ -70,6 +72,7 @@ export type Database = {
           created_at?: string
           id?: string
           interval_index?: number
+          last_reviewed_at?: string | null
           next_review_date?: string | null
           notes?: string | null
           status?: string
@@ -124,6 +127,7 @@ export type Database = {
           created_at: string
           id: string
           interval_index: number
+          last_reviewed_at: string | null
           next_review_date: string | null
           notes: string | null
           status: string

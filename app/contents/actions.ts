@@ -21,7 +21,8 @@ export type ActionError =
   | "archive_failed"
   | "not_found"
   | "reset_failed"
-  | "update_failed";
+  | "update_failed"
+  | "delete_failed";
 
 export type ActionResult<T = undefined> =
   | { ok: true; data: T }
@@ -210,5 +211,25 @@ export async function updateContent(
   revalidatePath("/");
   revalidatePath("/contents");
   revalidatePath(`/contents/${contentId}`);
+  return { ok: true, data: undefined };
+}
+
+export async function deleteContent(contentId: string): Promise<ActionResult> {
+  if (!UUID_PATTERN.test(contentId)) return { ok: false, error: "invalid_id" };
+
+  const supabase = await createClient();
+  const userId = await requireUserId(supabase);
+  if (!userId) return { ok: false, error: "not_authenticated" };
+
+  // Deletion applies from any status. review_logs.content_id has ON DELETE
+  // CASCADE, so its history is removed with the content — permanently,
+  // unlike archive.
+  const { data, error } = await supabase.from("contents").delete().eq("id", contentId).select("id");
+
+  if (error) return { ok: false, error: "delete_failed" };
+  if (!data || data.length === 0) return { ok: false, error: "not_found" };
+
+  revalidatePath("/");
+  revalidatePath("/contents");
   return { ok: true, data: undefined };
 }

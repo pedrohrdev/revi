@@ -3,18 +3,20 @@ import { createClient } from "@/lib/supabase/server";
 import { getAllByStatus, type ContentRow } from "@/lib/data/contents";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ReviewProgress } from "@/components/review-progress";
 
 function ContentListItem({ content }: { content: ContentRow }) {
   return (
     <Link href={`/contents/${content.id}`}>
-      <Card className="transition-colors hover:bg-muted/50">
+      <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
         <CardHeader>
           <CardTitle className="text-base">{content.title}</CardTitle>
           {content.subject ? (
             <p className="text-sm text-muted-foreground">{content.subject}</p>
           ) : null}
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-3">
+          <ReviewProgress intervalIndex={content.interval_index} status={content.status} />
           <p className="text-sm text-muted-foreground">
             {content.next_review_date
               ? `Próxima revisão: ${content.next_review_date}`
@@ -55,7 +57,7 @@ export default async function ContentsPage() {
   ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 animate-in fade-in duration-300">
       <h1 className="text-2xl font-semibold">Conteúdos</h1>
 
       <Tabs defaultValue="active">

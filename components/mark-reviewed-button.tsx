@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,8 +11,20 @@ const ERROR_MESSAGES: Record<string, string> = {
   content_not_active: "Esse conteúdo não pode ser revisado agora.",
 };
 
-export function MarkReviewedButton({ contentId }: { contentId: string }) {
+export function MarkReviewedButton({
+  contentId,
+  intervalIndex,
+  lastReviewedAt,
+  today,
+}: {
+  contentId: string;
+  intervalIndex: number;
+  lastReviewedAt: string | null;
+  today: string;
+}) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const alreadyReviewedToday = lastReviewedAt === today;
 
   function handleClick() {
     startTransition(async () => {
@@ -21,7 +34,16 @@ export function MarkReviewedButton({ contentId }: { contentId: string }) {
         return;
       }
       toast.success("Revisão registrada!");
+      router.refresh();
     });
+  }
+
+  if (alreadyReviewedToday) {
+    return (
+      <Button size="sm" variant="outline" disabled className="text-primary">
+        ✓ Revisão {intervalIndex} feita
+      </Button>
+    );
   }
 
   return (

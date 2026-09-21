@@ -40,6 +40,7 @@ describe("mark_content_reviewed RPC", () => {
       expect(data?.interval_index).toBe(step);
       expect(data?.status).toBe("active");
       expect(data?.next_review_date).toBe(computeNextReview(step, today));
+      expect(data?.last_reviewed_at).toBe(today);
 
       const { data: logs } = await user.client
         .from("review_logs")
@@ -67,6 +68,7 @@ describe("mark_content_reviewed RPC", () => {
     expect(fifth?.status).toBe("mastered");
     expect(fifth?.interval_index).toBe(4);
     expect(fifth?.next_review_date).toBeNull();
+    expect(fifth?.last_reviewed_at).toBe(today);
     expect(isLastInterval(4)).toBe(true);
 
     const { count: totalLogs } = await user.client
