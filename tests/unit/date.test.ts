@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { addDaysToDateString, isFutureSaoPaulo, todaySaoPaulo } from "@/lib/date";
+import {
+  addDaysToDateString,
+  formatReviewDatePtBR,
+  isFutureSaoPaulo,
+  todaySaoPaulo,
+} from "@/lib/date";
 
 describe("todaySaoPaulo", () => {
   afterEach(() => {
@@ -100,5 +105,15 @@ describe("addDaysToDateString", () => {
 
   it("throws for a nonexistent starting date", () => {
     expect(() => addDaysToDateString("2026-02-30", 1)).toThrow(/invalid_date/);
+  });
+});
+
+describe("formatReviewDatePtBR", () => {
+  it("formats as 'Weekday, dia D de month' in pt-BR", () => {
+    expect(formatReviewDatePtBR("2026-08-10")).toBe("Segunda, dia 10 de agosto");
+  });
+
+  it("never shifts the calendar date backward across the Sao Paulo offset", () => {
+    expect(formatReviewDatePtBR("2026-12-31")).toBe("Quinta, dia 31 de dezembro");
   });
 });

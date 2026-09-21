@@ -77,3 +77,21 @@ export function addDaysToDateString(dateStr: string, days: number): string {
     day: result.getUTCDate(),
   });
 }
+
+const WEEKDAY_NAMES_PT = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+const MONTH_NAME_FORMATTER = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: SAO_PAULO_TIME_ZONE,
+  month: "long",
+});
+
+// Formats a "YYYY-MM-DD" string as "Segunda, dia 12 de agosto" (pt-BR).
+// Anchors at noon UTC before reading calendar fields, so the fixed
+// America/Sao_Paulo offset can never roll the date to the previous day.
+export function formatReviewDatePtBR(dateStr: string): string {
+  const { year, month, day } = parseCalendarDate(dateStr);
+  const anchor = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  const weekday = WEEKDAY_NAMES_PT[anchor.getUTCDay()];
+  const monthName = MONTH_NAME_FORMATTER.format(anchor);
+  return `${weekday}, dia ${day} de ${monthName}`;
+}

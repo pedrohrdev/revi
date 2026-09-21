@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getContentById, getReviewLogs } from "@/lib/data/contents";
-import { todaySaoPaulo } from "@/lib/date";
+import { formatReviewDatePtBR, todaySaoPaulo } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContentActions } from "@/components/content-actions";
 import { ReviewProgress } from "@/components/review-progress";
@@ -45,10 +45,18 @@ export default async function ContentDetailPage(props: PageProps<"/contents/[id]
         </CardHeader>
         <CardContent className="space-y-4">
           {content.notes ? <p className="text-sm whitespace-pre-wrap">{content.notes}</p> : null}
-          <ReviewProgress intervalIndex={content.interval_index} status={content.status} />
+          <ReviewProgress
+            intervalIndex={content.interval_index}
+            status={content.status}
+            nextReviewDate={content.next_review_date}
+            reviewLogs={logs.map((log) => ({
+              intervalIndexAtReview: log.interval_index_at_review,
+              reviewedAt: log.reviewed_at,
+            }))}
+          />
           <p className="text-sm text-muted-foreground">
             {content.next_review_date
-              ? `Próxima revisão: ${content.next_review_date}`
+              ? `Próxima revisão: ${formatReviewDatePtBR(content.next_review_date)}`
               : "Sem revisão agendada"}
           </p>
           <ContentActions

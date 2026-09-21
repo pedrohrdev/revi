@@ -1,14 +1,18 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getAllByStatus, type ContentRow } from "@/lib/data/contents";
+import { formatReviewDatePtBR } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReviewProgress } from "@/components/review-progress";
 
-function ContentListItem({ content }: { content: ContentRow }) {
+function ContentListItem({ content, delayMs = 0 }: { content: ContentRow; delayMs?: number }) {
   return (
     <Link href={`/contents/${content.id}`}>
-      <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
+      <Card
+        className="animate-in fade-in slide-in-from-bottom-1 fill-mode-backwards duration-300 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+        style={{ animationDelay: `${delayMs}ms` }}
+      >
         <CardHeader>
           <CardTitle className="text-base">{content.title}</CardTitle>
           {content.subject ? (
@@ -16,10 +20,14 @@ function ContentListItem({ content }: { content: ContentRow }) {
           ) : null}
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <ReviewProgress intervalIndex={content.interval_index} status={content.status} />
+          <ReviewProgress
+            intervalIndex={content.interval_index}
+            status={content.status}
+            nextReviewDate={content.next_review_date}
+          />
           <p className="text-sm text-muted-foreground">
             {content.next_review_date
-              ? `Próxima revisão: ${content.next_review_date}`
+              ? `Próxima revisão: ${formatReviewDatePtBR(content.next_review_date)}`
               : "Sem revisão agendada"}
           </p>
         </CardContent>
@@ -41,8 +49,8 @@ function ContentList({
 
   return (
     <div className="space-y-3">
-      {contents.map((content) => (
-        <ContentListItem key={content.id} content={content} />
+      {contents.map((content, i) => (
+        <ContentListItem key={content.id} content={content} delayMs={i * 60} />
       ))}
     </div>
   );
