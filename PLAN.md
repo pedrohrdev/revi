@@ -705,6 +705,18 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
   - **Limitação de verificação**: sem extensão do Chrome conectada neste ambiente novamente — não foi possível confirmar visualmente o resultado. Fica pendente checagem visual do usuário depois do deploy, incluindo se o contraste da paleta "Earthy Harmony" ficou bom na prática.
 - **Dependências**: Etapa 20.
 
+### Etapa 22 (pós-MVP, 2026-09-20) — Bug real de navegação: nada levava até a página de detalhe
+
+> Usuário pediu novamente "faça que seja possível excluir um conteúdo" — a funcionalidade já existia (Etapa 20) e estava em produção, mas ele não conseguia achá-la. Com um screenshot da home em produção, ficou claro o motivo: não tinha nenhum jeito de chegar em `/contents/[id]` (onde fica o botão Excluir) a partir da tela em que ele estava.
+
+- [x] **Bug real encontrado**: os cards do dashboard (`app/page.tsx`) nunca foram um link — só a lista em `/contents` (`ContentListItem`) navegava para o detalhe. E não existia nenhum link para `/contents` em lugar nenhum da UI (nem no header, nem na home) — ou seja, a única forma de chegar à página de detalhe (e portanto ao botão Excluir) era digitar a URL manualmente. Isso não é uma regressão desta sessão: essa lacuna de navegação existia desde as etapas originais do MVP, só ficou visível agora que "Excluir" passou a morar lá.
+- **Corrigido**:
+  - `app/layout.tsx`: header ganhou uma `nav` com dois links — "Revi" (para `/`) e "Conteúdos" (para `/contents`) — visível em toda página autenticada.
+  - `app/page.tsx`: o cabeçalho de cada `ContentCard` (título + matéria) agora é um `Link` para `/contents/${id}`; o resto do card (bolinhas de progresso, botão "Marcar como revisado") continua fora do link, sem precisar de `stopPropagation` porque só o cabeçalho ficou clicável, não o card inteiro.
+- **Critérios de conclusão**: `npm run lint`, `npm run build` e `npm run test` passam.
+  - **Resultado (2026-09-20)**: lint limpo; build gera as mesmas 9 rotas; `npm run test` 72/72 (sem mudança de comportamento testável — é navegação de UI).
+- **Dependências**: Etapa 20 (onde o botão Excluir foi criado, mas ficou inalcançável).
+
 ## Observações para o agente que for implementar
 
 - Implemente **uma etapa por vez**, marque o checkbox correspondente (`- [x]`) ao concluí-la, e só avance para a próxima depois de validar os critérios de conclusão descritos nela — nenhuma etapa deve ser considerada concluída com base em uma etapa futura.
