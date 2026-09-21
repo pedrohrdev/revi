@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
@@ -34,7 +35,17 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         {email ? (
           <header className="flex items-center justify-between gap-3 border-b bg-card px-4 py-3">
-            <span className="shrink-0 text-sm font-semibold text-primary">Revi</span>
+            <nav className="flex shrink-0 items-center gap-4">
+              <Link href="/" className="text-sm font-semibold text-primary">
+                Revi
+              </Link>
+              <Link
+                href="/contents"
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Conteúdos
+              </Link>
+            </nav>
             <div className="flex min-w-0 items-center gap-3">
               <span className="hidden truncate text-sm text-muted-foreground sm:inline">
                 {email}

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getAllByStatus, getDueToday, type ContentRow } from "@/lib/data/contents";
 import { formatReviewDatePtBR, todaySaoPaulo } from "@/lib/date";
@@ -20,12 +21,14 @@ function ContentCard({
       className="animate-in fade-in slide-in-from-bottom-1 fill-mode-backwards duration-300 transition-all hover:-translate-y-0.5 hover:shadow-md"
       style={{ animationDelay: `${delayMs}ms` }}
     >
-      <CardHeader>
-        <CardTitle className="text-base">{content.title}</CardTitle>
-        {content.subject ? (
-          <p className="text-sm text-muted-foreground">{content.subject}</p>
-        ) : null}
-      </CardHeader>
+      <Link href={`/contents/${content.id}`}>
+        <CardHeader>
+          <CardTitle className="text-base hover:text-primary">{content.title}</CardTitle>
+          {content.subject ? (
+            <p className="text-sm text-muted-foreground">{content.subject}</p>
+          ) : null}
+        </CardHeader>
+      </Link>
       <CardContent className="flex flex-col gap-3">
         <ReviewProgress
           intervalIndex={content.interval_index}
