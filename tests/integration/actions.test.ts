@@ -27,9 +27,14 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-const { archiveContent, createContent, markReviewed, resetContent, updateContent } = await import(
-  "@/app/contents/actions"
-);
+const {
+  archiveContent,
+  createContent,
+  deleteContent,
+  markReviewed,
+  resetContent,
+  updateContent,
+} = await import("@/app/contents/actions");
 // vi.mock calls above are hoisted before this file's imports run, so a
 // plain top-level `import` would also see the mocked module — the dynamic
 // import here is equivalent, just explicit about the ordering.
@@ -135,6 +140,7 @@ describe("contents Server Actions", () => {
           .single();
         expect(row?.interval_index).toBe(step);
         expect(row?.next_review_date).toBe(computeNextReview(step, today));
+        expect(row?.last_reviewed_at).toBe(today);
 
         const { data: logs } = await admin
           .from("review_logs")
@@ -152,6 +158,7 @@ describe("contents Server Actions", () => {
       const { data: final } = await admin.from("contents").select("*").eq("id", content.id).single();
       expect(final?.status).toBe("mastered");
       expect(final?.next_review_date).toBeNull();
+      expect(final?.last_reviewed_at).toBe(today);
 
       const { count } = await admin
         .from("review_logs")
@@ -268,8 +275,76 @@ describe("contents Server Actions", () => {
     });
   });
 
+  describe("deleteContent", () => {
+    it("deletes a content and cascades its review logs", async () => {
+      const user = await freshUser();
+      const content = await createTestContent(user, { intervalIndex: 0 });
+      const admin = adminClient();
+      const { error: seedLogError } = await admin.from("review_logs").insert({
+        content_id: content.id,
+        user_id: user.id,
+        interval_index_at_review: 0,
+      });
+      expect(seedLogError).toBeNull();
+
+      const result = await deleteContent(content.id);
+      expect(result.ok).toBe(true);
+
+      const { data: row } = await admin.from("contents").select("id").eq("id", content.id).maybeSingle();
+      expect(row).toBeNull();
+
+      const { count } = await admin
+        .from("review_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("content_id", content.id);
+      expect(count).toBe(0);
+    });
+
+    it("deletes regardless of status (mastered/archived)", async () => {
+      const user = await freshUser();
+      const content = await createTestContent(user, {
+        intervalIndex: 4,
+        status: "mastered",
+        nextReviewDate: null,
+      });
+
+      const result = await deleteContent(content.id);
+      expect(result.ok).toBe(true);
+
+      const admin = adminClient();
+      const { data: row } = await admin.from("contents").select("id").eq("id", content.id).maybeSingle();
+      expect(row).toBeNull();
+    });
+
+    it("returns not_found for a nonexistent id", async () => {
+      await freshUser();
+
+      const result = await deleteContent("00000000-0000-0000-0000-000000000000");
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error).toBe("not_found");
+    });
+
+    it("is rejected for a client with no session, and persists the content", async () => {
+      const user = await freshUser();
+      const content = await createTestContent(user, { title: "Protegido" });
+
+      activeClientFactory = () => anonClient();
+      const result = await deleteContent(content.id);
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error).toBe("not_authenticated");
+
+      const admin = adminClient();
+      const { data } = await admin.from("contents").select("id").eq("id", content.id).maybeSingle();
+      expect(data).not.toBeNull();
+    });
+  });
+
   describe("cross-user isolation", () => {
-    it("user A cannot mark, archive, reset, or edit user B's content", async () => {
+    it("user A cannot mark, archive, reset, edit, or delete user B's content", async () => {
       const userA = await freshUser();
       const contentA = await createTestContent(userA, { title: "Pertence a A" });
 
@@ -286,6 +361,9 @@ describe("contents Server Actions", () => {
 
       const updateResult = await updateContent(contentA.id, { title: "hijacked" });
       expect(updateResult.ok).toBe(false);
+
+      const deleteResult = await deleteContent(contentA.id);
+      expect(deleteResult.ok).toBe(false);
 
       const admin = adminClient();
       const { data } = await admin.from("contents").select("title").eq("id", contentA.id).single();

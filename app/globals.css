@@ -48,73 +48,79 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Paleta "Earthy Harmony": Porcelain/Beige (claro), Palm Leaf (verde
+ * primário, presente nos dois modos), Carbon Black/Onyx (escuro).
+ * Tons derivados (muted/secondary/border) usam color-mix a partir dessas 5
+ * cores em vez de inventar novos tons soltos da paleta.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --background: #f7f7f2; /* Porcelain */
+  --foreground: #222725; /* Carbon Black */
+  --card: #ffffff;
+  --card-foreground: #222725;
+  --popover: #ffffff;
+  --popover-foreground: #222725;
+  --primary: #899878; /* Palm Leaf */
+  --primary-foreground: #222725; /* Carbon Black — contraste ~4.9:1 sobre Palm Leaf */
+  --secondary: #e4e6c3; /* Beige */
+  --secondary-foreground: #222725;
+  --muted: color-mix(in srgb, #e4e6c3 40%, white);
+  --muted-foreground: color-mix(in srgb, #222725 65%, white);
+  --accent: #e4e6c3; /* Beige */
+  --accent-foreground: #222725;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --border: color-mix(in srgb, #222725 12%, white);
+  --input: color-mix(in srgb, #222725 12%, white);
+  --ring: #899878; /* Palm Leaf */
+  --chart-1: #899878;
+  --chart-2: #e4e6c3;
+  --chart-3: #222725;
+  --chart-4: color-mix(in srgb, #899878 60%, #222725);
+  --chart-5: #121113;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #f7f7f2;
+  --sidebar-foreground: #222725;
+  --sidebar-primary: #899878;
+  --sidebar-primary-foreground: #222725;
+  --sidebar-accent: #e4e6c3;
+  --sidebar-accent-foreground: #222725;
+  --sidebar-border: color-mix(in srgb, #222725 12%, white);
+  --sidebar-ring: #899878;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #121113; /* Onyx */
+  --foreground: #f7f7f2; /* Porcelain */
+  --card: #222725; /* Carbon Black */
+  --card-foreground: #f7f7f2;
+  --popover: #222725;
+  --popover-foreground: #f7f7f2;
+  --primary: #899878; /* Palm Leaf */
+  --primary-foreground: #121113; /* Onyx — texto escuro sobre o verde claro */
+  --secondary: color-mix(in srgb, #222725 85%, white);
+  --secondary-foreground: #f7f7f2;
+  --muted: color-mix(in srgb, #222725 90%, white);
+  --muted-foreground: color-mix(in srgb, #f7f7f2 65%, #222725);
+  --accent: color-mix(in srgb, #899878 30%, #222725);
+  --accent-foreground: #f7f7f2;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --border: color-mix(in srgb, white 12%, transparent);
+  --input: color-mix(in srgb, white 15%, transparent);
+  --ring: #899878;
+  --chart-1: #899878;
+  --chart-2: #e4e6c3;
+  --chart-3: #f7f7f2;
+  --chart-4: color-mix(in srgb, #899878 60%, #f7f7f2);
+  --chart-5: #e4e6c3;
+  --sidebar: #222725;
+  --sidebar-foreground: #f7f7f2;
+  --sidebar-primary: #899878;
+  --sidebar-primary-foreground: #121113;
+  --sidebar-accent: color-mix(in srgb, #899878 30%, #222725);
+  --sidebar-accent-foreground: #f7f7f2;
+  --sidebar-border: color-mix(in srgb, white 12%, transparent);
+  --sidebar-ring: #899878;
 }
 
 @layer base {

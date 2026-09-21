@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 
-const geistSans = Geist({
+const inter = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
@@ -29,12 +29,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {email ? (
-          <header className="flex items-center justify-between gap-3 border-b px-4 py-3">
-            <span className="shrink-0 text-sm font-medium">Revi</span>
+          <header className="flex items-center justify-between gap-3 border-b bg-card px-4 py-3">
+            <span className="shrink-0 text-sm font-semibold text-primary">Revi</span>
             <div className="flex min-w-0 items-center gap-3">
               <span className="hidden truncate text-sm text-muted-foreground sm:inline">
                 {email}
