@@ -1,15 +1,20 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { Inter, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Hanken_Grotesk, Instrument_Serif, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
-import { signOut } from "@/app/actions";
-import { Button } from "@/components/ui/button";
+import { todaySaoPaulo } from "@/lib/date";
+import { AppShell } from "@/components/app-shell";
 import { Toaster } from "@/components/ui/sonner";
 
-const inter = Inter({
-  variable: "--font-geist-sans",
+const hanken = Hanken_Grotesk({
+  variable: "--font-hanken",
   subsets: ["latin"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 const geistMono = Geist_Mono({
@@ -18,8 +23,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Revi",
-  description: "Organize suas revisões de conteúdos estudados.",
+  title: { default: "Revi", template: "%s · Revi" },
+  description: "Saiba o que você estudou, o que já revisou e quando revisar de novo.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#000000",
+  colorScheme: "dark",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -27,39 +37,39 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const { data } = await supabase.auth.getClaims();
   const email = data?.claims?.email as string | undefined;
 
+  let shell: { dueCount: number; subjects: string[] } | null = null;
+  if (email) {
+    // Lightweight: only the columns the shell needs (badge + subject
+    // suggestions in "Registrar estudo").
+    const { data: rows } = await supabase
+      .from("contents")
+      .select("subject, status, next_review_date");
+    const today = todaySaoPaulo();
+    const list = rows ?? [];
+    shell = {
+      dueCount: list.filter(
+        (row) => row.status === "active" && row.next_review_date && row.next_review_date <= today,
+      ).length,
+      subjects: [
+        ...new Set(list.map((row) => row.subject?.trim()).filter((s): s is string => !!s)),
+      ].sort((a, b) => a.localeCompare(b, "pt-BR")),
+    };
+  }
+
   return (
     <html
       lang="pt-BR"
-      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${hanken.variable} ${instrumentSerif.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        {email ? (
-          <header className="flex items-center justify-between gap-3 border-b bg-card px-4 py-3">
-            <nav className="flex shrink-0 items-center gap-4">
-              <Link href="/" className="text-sm font-semibold text-primary">
-                Revi
-              </Link>
-              <Link
-                href="/contents"
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Conteúdos
-              </Link>
-            </nav>
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="hidden truncate text-sm text-muted-foreground sm:inline">
-                {email}
-              </span>
-              <form action={signOut}>
-                <Button type="submit" variant="outline" size="sm">
-                  Sair
-                </Button>
-              </form>
-            </div>
-          </header>
-        ) : null}
-        {children}
-        <Toaster />
+      <body className="min-h-full bg-background text-foreground">
+        {email && shell ? (
+          <AppShell email={email} dueCount={shell.dueCount} subjects={shell.subjects}>
+            {children}
+          </AppShell>
+        ) : (
+          <div className="flex min-h-dvh flex-col">{children}</div>
+        )}
+        <Toaster theme="dark" position="top-center" />
       </body>
     </html>
   );

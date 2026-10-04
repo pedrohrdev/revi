@@ -35,30 +35,30 @@ export function EditContentForm({ content }: { content: ContentRow }) {
         return;
       }
 
-      toast.success("Conteúdo atualizado!");
+      toast.success("Alterações salvas.");
       router.push(`/contents/${content.id}`);
     });
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4">
+    <form action={handleSubmit} className="space-y-5">
       <div className="space-y-2">
-        <Label htmlFor="title">Título</Label>
-        <Input id="title" name="title" required defaultValue={content.title} />
+        <Label htmlFor="title">Assunto</Label>
+        <Input id="title" name="title" required defaultValue={content.title} className="h-11 text-base" />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="subject">Matéria (opcional)</Label>
-        <Input id="subject" name="subject" defaultValue={content.subject ?? ""} />
+        <Label htmlFor="subject">Matéria</Label>
+        <Input id="subject" name="subject" defaultValue={content.subject ?? ""} className="h-10" />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Notas (opcional)</Label>
-        <Textarea id="notes" name="notes" defaultValue={content.notes ?? ""} />
+        <Label htmlFor="notes">Anotações</Label>
+        <Textarea id="notes" name="notes" defaultValue={content.notes ?? ""} className="min-h-40" />
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? "Salvando…" : "Salvar"}
+      <Button type="submit" disabled={isPending} className="h-11 w-full font-semibold">
+        {isPending ? "Salvando…" : "Salvar alterações"}
       </Button>
     </form>
   );

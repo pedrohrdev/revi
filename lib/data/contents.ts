@@ -57,3 +57,28 @@ export async function getReviewLogs(client: Client, contentId: string): Promise<
   if (error) throw new Error(`failed_to_get_review_logs: ${error.message}`);
   return data;
 }
+
+// Every content of the caller (any status). The insight screens (agenda,
+// history, subjects, progress) derive everything from this plus
+// getAllReviewLogs — a student's library is small enough that two queries
+// beat many narrow ones.
+export async function getAllContents(client: Client): Promise<ContentRow[]> {
+  const { data, error } = await client
+    .from("contents")
+    .select("*")
+    .order("studied_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(`failed_to_get_all_contents: ${error.message}`);
+  return data;
+}
+
+export async function getAllReviewLogs(client: Client): Promise<ReviewLogRow[]> {
+  const { data, error } = await client
+    .from("review_logs")
+    .select("*")
+    .order("reviewed_at", { ascending: false });
+
+  if (error) throw new Error(`failed_to_get_all_review_logs: ${error.message}`);
+  return data;
+}

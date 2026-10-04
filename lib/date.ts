@@ -95,3 +95,101 @@ export function formatReviewDatePtBR(dateStr: string): string {
   const monthName = MONTH_NAME_FORMATTER.format(anchor);
   return `${weekday}, dia ${day} de ${monthName}`;
 }
+
+// Converts a timestamptz (ISO string, e.g. review_logs.reviewed_at) into
+// the America/Sao_Paulo calendar date it falls on — the same rule the
+// database uses for "one review per day".
+export function toSaoPauloDate(isoTimestamp: string): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: SAO_PAULO_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(isoTimestamp));
+
+  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${byType.year}-${byType.month}-${byType.day}`;
+}
+
+// Whole calendar days from `from` to `to` (negative when `to` is earlier).
+export function daysBetween(from: string, to: string): number {
+  const a = parseCalendarDate(from);
+  const b = parseCalendarDate(to);
+  return Math.round(
+    (Date.UTC(b.year, b.month - 1, b.day) - Date.UTC(a.year, a.month - 1, a.day)) / 86_400_000,
+  );
+}
+
+// 0 = domingo … 6 = sábado.
+export function weekdayIndex(dateStr: string): number {
+  const { year, month, day } = parseCalendarDate(dateStr);
+  return new Date(Date.UTC(year, month - 1, day, 12)).getUTCDay();
+}
+
+const MONTHS_PT = [
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
+];
+
+export const WEEKDAY_SHORT_PT = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+
+// "4 de outubro"
+export function formatDayMonthPtBR(dateStr: string): string {
+  const { month, day } = parseCalendarDate(dateStr);
+  return `${day} de ${MONTHS_PT[month - 1]}`;
+}
+
+// "4 out"
+export function formatShortDatePtBR(dateStr: string): string {
+  const { month, day } = parseCalendarDate(dateStr);
+  return `${day} ${MONTHS_PT[month - 1].slice(0, 3)}`;
+}
+
+// "Outubro de 2026", from "YYYY-MM"
+export function formatMonthPtBR(monthStr: string): string {
+  const { year, month } = parseCalendarDate(`${monthStr}-01`);
+  const name = MONTHS_PT[month - 1];
+  return `${name[0].toUpperCase()}${name.slice(1)} de ${year}`;
+}
+
+// "hoje", "amanhã", "ontem", "em 3 dias", "há 5 dias"
+export function formatRelativeDayPtBR(dateStr: string, today: string): string {
+  const diff = daysBetween(today, dateStr);
+  if (diff === 0) return "hoje";
+  if (diff === 1) return "amanhã";
+  if (diff === -1) return "ontem";
+  return diff > 0 ? `em ${diff} dias` : `há ${-diff} dias`;
+}
+
+// Shifts a "YYYY-MM" month string by `delta` months.
+export function addMonths(monthStr: string, delta: number): string {
+  const { year, month } = parseCalendarDate(`${monthStr}-01`);
+  const index = year * 12 + (month - 1) + delta;
+  return `${String(Math.floor(index / 12)).padStart(4, "0")}-${String((index % 12) + 1).padStart(2, "0")}`;
+}
+
+export function isValidMonthString(value: string | undefined): value is string {
+  if (!value || !/^\d{4}-\d{2}$/.test(value)) return false;
+  const month = Number(value.slice(5));
+  return month >= 1 && month <= 12;
+}
+
+export function isValidDateString(value: string | undefined): value is string {
+  if (!value) return false;
+  try {
+    parseCalendarDate(value);
+    return true;
+  } catch {
+    return false;
+  }
+}

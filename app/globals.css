@@ -7,9 +7,17 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-hanken);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
+  --font-display: var(--font-instrument-serif);
+  --color-overdue: var(--overdue);
+  --color-stage-0: var(--stage-0);
+  --color-stage-1: var(--stage-1);
+  --color-stage-2: var(--stage-2);
+  --color-stage-3: var(--stage-3);
+  --color-stage-4: var(--stage-4);
+  --color-stage-5: var(--stage-5);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,78 +57,54 @@
 }
 
 /*
- * Paleta "Earthy Harmony": Porcelain/Beige (claro), Palm Leaf (verde
- * primário, presente nos dois modos), Carbon Black/Onyx (escuro).
- * Tons derivados (muted/secondary/border) usam color-mix a partir dessas 5
- * cores em vez de inventar novos tons soltos da paleta.
+ * Tema único: preto. "Giz no quadro-negro" — texto em tom de giz sobre
+ * preto puro, e um único acento amarelo-marca-texto. A rampa --stage-1..5
+ * é sequencial (um só matiz, do apagado ao aceso): quanto mais revisões um
+ * conteúdo acumulou, mais "aceso" ele aparece. Vermelho fica reservado ao
+ * estado "atrasado" e sempre vem acompanhado de texto.
  */
-:root {
-  --background: #f7f7f2; /* Porcelain */
-  --foreground: #222725; /* Carbon Black */
-  --card: #ffffff;
-  --card-foreground: #222725;
-  --popover: #ffffff;
-  --popover-foreground: #222725;
-  --primary: #899878; /* Palm Leaf */
-  --primary-foreground: #222725; /* Carbon Black — contraste ~4.9:1 sobre Palm Leaf */
-  --secondary: #e4e6c3; /* Beige */
-  --secondary-foreground: #222725;
-  --muted: color-mix(in srgb, #e4e6c3 40%, white);
-  --muted-foreground: color-mix(in srgb, #222725 65%, white);
-  --accent: #e4e6c3; /* Beige */
-  --accent-foreground: #222725;
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: color-mix(in srgb, #222725 12%, white);
-  --input: color-mix(in srgb, #222725 12%, white);
-  --ring: #899878; /* Palm Leaf */
-  --chart-1: #899878;
-  --chart-2: #e4e6c3;
-  --chart-3: #222725;
-  --chart-4: color-mix(in srgb, #899878 60%, #222725);
-  --chart-5: #121113;
-  --radius: 0.625rem;
-  --sidebar: #f7f7f2;
-  --sidebar-foreground: #222725;
-  --sidebar-primary: #899878;
-  --sidebar-primary-foreground: #222725;
-  --sidebar-accent: #e4e6c3;
-  --sidebar-accent-foreground: #222725;
-  --sidebar-border: color-mix(in srgb, #222725 12%, white);
-  --sidebar-ring: #899878;
-}
-
+:root,
 .dark {
-  --background: #121113; /* Onyx */
-  --foreground: #f7f7f2; /* Porcelain */
-  --card: #222725; /* Carbon Black */
-  --card-foreground: #f7f7f2;
-  --popover: #222725;
-  --popover-foreground: #f7f7f2;
-  --primary: #899878; /* Palm Leaf */
-  --primary-foreground: #121113; /* Onyx — texto escuro sobre o verde claro */
-  --secondary: color-mix(in srgb, #222725 85%, white);
-  --secondary-foreground: #f7f7f2;
-  --muted: color-mix(in srgb, #222725 90%, white);
-  --muted-foreground: color-mix(in srgb, #f7f7f2 65%, #222725);
-  --accent: color-mix(in srgb, #899878 30%, #222725);
-  --accent-foreground: #f7f7f2;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: color-mix(in srgb, white 12%, transparent);
-  --input: color-mix(in srgb, white 15%, transparent);
-  --ring: #899878;
-  --chart-1: #899878;
-  --chart-2: #e4e6c3;
-  --chart-3: #f7f7f2;
-  --chart-4: color-mix(in srgb, #899878 60%, #f7f7f2);
-  --chart-5: #e4e6c3;
-  --sidebar: #222725;
-  --sidebar-foreground: #f7f7f2;
-  --sidebar-primary: #899878;
-  --sidebar-primary-foreground: #121113;
-  --sidebar-accent: color-mix(in srgb, #899878 30%, #222725);
-  --sidebar-accent-foreground: #f7f7f2;
-  --sidebar-border: color-mix(in srgb, white 12%, transparent);
-  --sidebar-ring: #899878;
+  --background: #000000;
+  --foreground: #edede8;
+  --card: #0e0e0f;
+  --card-foreground: #edede8;
+  --popover: #141415;
+  --popover-foreground: #edede8;
+  --primary: #ffd166; /* marca-texto */
+  --primary-foreground: #1a1405;
+  --secondary: #1a1a1c;
+  --secondary-foreground: #edede8;
+  --muted: #151517;
+  --muted-foreground: #8b8b86;
+  --accent: #1d1d20;
+  --accent-foreground: #edede8;
+  --destructive: #ff7a66;
+  --overdue: #ff7a66;
+  --border: #222225;
+  --input: #2a2a2e;
+  --ring: #ffd166;
+  --stage-0: #232326;
+  --stage-1: #6b5418;
+  --stage-2: #937221;
+  --stage-3: #bf922b;
+  --stage-4: #e6b23a;
+  --stage-5: #ffd166;
+  --chart-1: #ffd166;
+  --chart-2: #bf922b;
+  --chart-3: #937221;
+  --chart-4: #6b5418;
+  --chart-5: #232326;
+  --radius: 0.75rem;
+  --sidebar: #000000;
+  --sidebar-foreground: #edede8;
+  --sidebar-primary: #ffd166;
+  --sidebar-primary-foreground: #1a1405;
+  --sidebar-accent: #141416;
+  --sidebar-accent-foreground: #edede8;
+  --sidebar-border: #1b1b1e;
+  --sidebar-ring: #ffd166;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -132,5 +116,26 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer base {
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 35%, transparent);
+  }
+  body {
+    font-feature-settings: "ss01", "cv11";
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

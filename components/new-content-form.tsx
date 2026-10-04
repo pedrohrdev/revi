@@ -1,13 +1,14 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createContent } from "@/app/contents/actions";
-import { todaySaoPaulo } from "@/lib/date";
+import { addDaysToDateString, todaySaoPaulo } from "@/lib/date";
 
 const ERROR_MESSAGES: Record<string, string> = {
   title_required: "Informe um título.",
@@ -17,9 +18,17 @@ const ERROR_MESSAGES: Record<string, string> = {
   create_failed: "Não foi possível salvar. Tente novamente.",
 };
 
-export function NewContentForm({ onSuccess }: { onSuccess: () => void }) {
+export function NewContentForm({
+  onSuccess,
+  subjects = [],
+}: {
+  onSuccess: () => void;
+  subjects?: string[];
+}) {
   const [isPending, startTransition] = useTransition();
   const today = todaySaoPaulo();
+  const yesterday = addDaysToDateString(today, -1);
+  const [studiedAt, setStudiedAt] = useState(today);
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -35,44 +44,91 @@ export function NewContentForm({ onSuccess }: { onSuccess: () => void }) {
         return;
       }
 
-      toast.success("Conteúdo criado!");
+      toast.success("Estudo registrado. Primeira revisão agendada.");
       onSuccess();
     });
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4">
+    <form action={handleSubmit} className="space-y-5">
       <div className="space-y-2">
-        <Label htmlFor="title">Título</Label>
-        <Input id="title" name="title" required placeholder="Ex: Termodinâmica cap. 3" />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="subject">Matéria (opcional)</Label>
-        <Input id="subject" name="subject" placeholder="Ex: Física" />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notas (opcional)</Label>
-        <Textarea id="notes" name="notes" placeholder="Anotações sobre o que foi estudado" />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="studiedAt">Data de estudo</Label>
-        {/* max evita datas futuras como conveniência de UX — a
-            validação de verdade é feita pela Server Action. */}
+        <Label htmlFor="title">Assunto</Label>
         <Input
-          id="studiedAt"
-          name="studiedAt"
-          type="date"
-          defaultValue={today}
-          max={today}
+          id="title"
+          name="title"
           required
+          autoFocus
+          placeholder="Ex.: Leis de Newton"
+          className="h-11 text-base"
         />
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? "Salvando…" : "Salvar"}
+      <div className="space-y-2">
+        <Label htmlFor="subject">Matéria</Label>
+        <Input
+          id="subject"
+          name="subject"
+          list="subject-suggestions"
+          placeholder="Ex.: Física"
+          autoComplete="off"
+          className="h-10"
+        />
+        <datalist id="subject-suggestions">
+          {subjects.map((subject) => (
+            <option key={subject} value={subject} />
+          ))}
+        </datalist>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="studiedAt">Quando estudou</Label>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: "Hoje", value: today },
+            { label: "Ontem", value: yesterday },
+          ].map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setStudiedAt(option.value)}
+              aria-pressed={studiedAt === option.value}
+              className={cn(
+                "h-9 rounded-lg border px-3 text-sm transition-colors",
+                studiedAt === option.value
+                  ? "border-primary/60 bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+          {/* max evita datas futuras como conveniência de UX — a
+              validação de verdade é feita pela Server Action. */}
+          <Input
+            id="studiedAt"
+            name="studiedAt"
+            type="date"
+            value={studiedAt}
+            onChange={(event) => setStudiedAt(event.target.value)}
+            max={today}
+            required
+            className="h-9 w-auto flex-1 [color-scheme:dark]"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="notes">Anotações</Label>
+        <Textarea
+          id="notes"
+          name="notes"
+          placeholder="Pontos-chave, páginas, dúvidas que ficaram"
+          className="min-h-20"
+        />
+      </div>
+
+      <Button type="submit" disabled={isPending} className="h-11 w-full text-sm font-semibold">
+        {isPending ? "Registrando…" : "Registrar estudo"}
       </Button>
     </form>
   );

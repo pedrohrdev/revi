@@ -717,6 +717,27 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
   - **Resultado (2026-09-20)**: lint limpo; build gera as mesmas 9 rotas; `npm run test` 72/72 (sem mudança de comportamento testável — é navegação de UI).
 - **Dependências**: Etapa 20 (onde o botão Excluir foi criado, mas ficou inalcançável).
 
+### Etapa 23 (pós-MVP, 2026-10-04) — Redesign completo: tema preto, seções e visão clara do estudo
+
+> Pedido do usuário: achou o design "muito feio"; quer tema preto, mais funcionalidades, seções no site, fluxo limpo e aparência profissional. Quer um sistema que deixe claro o que o estudante estudou, quando deve revisar e o que já revisou (com datas). Referências: Anki (mapa de calor e ciclo), Linear/Raycast (navegação lateral escura), Notion Calendar (agenda mensal), Duolingo (sequência de dias).
+
+- [x] **Identidade visual** (`app/globals.css`, `app/layout.tsx`): tema único preto (`#000`), texto em tom de giz, acento amarelo-marca-texto `#ffd166`. A rampa sequencial `--stage-1..5` (um só matiz, do apagado ao aceso) representa a força da memória. Vermelho (`--overdue`) só aparece em "atrasada", sempre com ícone + texto. Fontes: Instrument Serif (títulos) + Hanken Grotesk (interface). `prefers-reduced-motion` respeitado.
+- [x] **Navegação por seções** (`components/app-shell.tsx`): barra lateral no desktop; barra inferior + botão flutuante no celular. Seções: Hoje (`/`), Agenda (`/agenda`), Conteúdos (`/contents`), Matérias (`/subjects`), Histórico (`/history`), Progresso (`/progress`). Contador de pendências em "Hoje". O atalho **N** abre "Registrar estudo" de qualquer tela.
+- [x] **Hoje**: frase-resumo do dia, fila com as atrasadas primeiro (dias de atraso, revisão N de 5, matéria; mais de 8 itens ficam atrás de "Mostrar mais"), "Revisado hoje", gráfico dos próximos 14 dias (agendadas e previstas; cada coluna abre o dia na agenda), sequência de dias e "Estudado recentemente". O estado vazio explica o ciclo 1/3/7/15/30 dias.
+- [x] **Agenda**: calendário mensal (`?m=YYYY-MM&d=YYYY-MM-DD`) com revisões agendadas, previstas (caso tudo seja revisado em dia), revisadas e estudos de cada dia, mais um painel com a lista do dia selecionado. As atrasadas aparecem em "hoje".
+- [x] **Conteúdos**: busca por título, matéria e anotações (ignora acentos); filtros por situação e por matéria via URL; tabela com progresso, data de estudo e próxima revisão em data relativa.
+- [x] **Matérias**: por matéria, mostra consolidação média do ciclo, assuntos, dominados, revisões, pendências de hoje e última atividade. Cada cartão abre os conteúdos filtrados.
+- [x] **Histórico**: linha do tempo dia a dia de estudos e revisões (com horário), filtro Tudo/Estudos/Revisões e paginação de 21 dias.
+- [x] **Progresso**: sequência atual e recorde, totais, mapa de calor do último ano e distribuição dos assuntos por estágio do ciclo.
+- [x] **Detalhe do conteúdo**: linha do tempo do ciclo atual (estudado e revisões 1 a 5, com data real e atraso, agendada ou prevista), anotações, todas as revisões com data e hora, e ações com ícones (Revisei, Editar, Arquivar, Recomeçar ciclo, Excluir).
+- [x] **Registrar estudo**: sugere matérias já usadas (`datalist`) e tem atalhos "Hoje"/"Ontem" para a data.
+- [x] **Sem mudança de schema**: tudo é derivado de `contents` + `review_logs` em `lib/insights.ts` (funções puras), a partir de duas queries novas em `lib/data/contents.ts` (`getAllContents`, `getAllReviewLogs`). Novos helpers de data em `lib/date.ts`, sempre em America/Sao_Paulo.
+- [x] **Cores de matéria**: matérias escolares comuns têm cor fixa (exatas e humanas não se repetem); as demais recebem cor por hash do nome. A cor sempre vem acompanhada do nome.
+- [x] **Login**: tela dividida com a escada de revisões; quem já está logado é redirecionado para `/`.
+- **Critérios de conclusão**: `npm run lint`, `tsc`, `npm run build` e testes unitários passam. Verificação visual por screenshots (desktop 1440px e celular 390px) contra um mock local do Supabase com dados fictícios, sem tocar no banco de produção.
+  - **Resultado (2026-10-04)**: lint limpo; build gera 13 rotas; testes unitários 54/54 (novo `tests/unit/insights.test.ts`). Testes de integração não rodaram nesta sessão, porque não havia `.env.local` nem credenciais do Supabase no ambiente. `package-lock.json` foi atualizado por `npm install` (faltavam `@emnapi/*`, o que quebrava `npm ci`).
+- **Dependências**: Etapa 22.
+
 ## Observações para o agente que for implementar
 
 - Implemente **uma etapa por vez**, marque o checkbox correspondente (`- [x]`) ao concluí-la, e só avance para a próxima depois de validar os critérios de conclusão descritos nela — nenhuma etapa deve ser considerada concluída com base em uma etapa futura.
