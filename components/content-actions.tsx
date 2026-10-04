@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { ArchiveIcon, CheckIcon, PencilIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -49,7 +50,7 @@ export function ContentActions({
         );
         return;
       }
-      toast.success("Revisão registrada!");
+      toast.success(`Revisão ${intervalIndex + 1} registrada.`);
       router.refresh();
     });
   }
@@ -73,7 +74,7 @@ export function ContentActions({
         toast.error("Não foi possível resetar.");
         return;
       }
-      toast.success("Conteúdo reiniciado.");
+      toast.success("Ciclo recomeçado. Primeira revisão amanhã.");
       router.refresh();
     });
   }
@@ -90,38 +91,43 @@ export function ContentActions({
     });
   }
 
+  const quiet = buttonVariants({ variant: "ghost", size: "lg" }) + " text-muted-foreground";
+
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-center gap-1.5 pt-2">
       {status === "active" ? (
         alreadyReviewedToday ? (
-          <Button disabled variant="outline" className="text-primary">
-            ✓ Revisão {intervalIndex} feita
-          </Button>
+          <span className="mr-2 inline-flex h-10 items-center gap-1.5 rounded-lg px-1 text-sm font-medium text-primary">
+            <CheckIcon className="size-4" />
+            Revisão {intervalIndex} feita hoje
+          </span>
         ) : (
-          <Button onClick={handleMarkReviewed} disabled={isPending}>
-            Marcar como revisado
+          <Button onClick={handleMarkReviewed} disabled={isPending} className="mr-2 h-10 px-4 font-semibold">
+            <CheckIcon />
+            {isPending ? "Registrando…" : `Revisei (revisão ${intervalIndex + 1})`}
           </Button>
         )
       ) : null}
+      <Link href={`/contents/${contentId}/edit`} className={quiet}>
+        <PencilIcon />
+        Editar
+      </Link>
       {status === "active" ? (
-        <Button onClick={handleArchive} disabled={isPending} variant="outline">
+        <Button onClick={handleArchive} disabled={isPending} variant="ghost" size="lg" className="text-muted-foreground">
+          <ArchiveIcon />
           Arquivar
         </Button>
       ) : null}
-      <Button onClick={handleReset} disabled={isPending} variant="outline">
-        Resetar
+      <Button onClick={handleReset} disabled={isPending} variant="ghost" size="lg" className="text-muted-foreground">
+        <RotateCcwIcon />
+        {status === "active" ? "Recomeçar ciclo" : "Voltar a revisar"}
       </Button>
-      <Link
-        href={`/contents/${contentId}/edit`}
-        className={buttonVariants({ variant: "outline" })}
-      >
-        Editar
-      </Link>
       <AlertDialog>
         <AlertDialogTrigger
-          className={buttonVariants({ variant: "destructive" })}
+          className={buttonVariants({ variant: "ghost", size: "lg" }) + " text-muted-foreground hover:text-destructive"}
           disabled={isPending}
         >
+          <Trash2Icon />
           Excluir
         </AlertDialogTrigger>
         <AlertDialogContent>

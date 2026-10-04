@@ -2,7 +2,7 @@
 
 import type { MouseEvent } from "react";
 import { cn } from "cn";
-import { formatReviewDatePtBR } from "@/lib/date";
+import { formatReviewDatePtBR, toSaoPauloDate } from "@/lib/date";
 import { computeNextReview } from "@/lib/review";
 import {
   Popover,
@@ -13,6 +13,10 @@ import {
 } from "@/components/ui/popover";
 
 const TOTAL_REVIEWS = 5;
+
+// Sequential ramp: each completed review lights its segment a little
+// brighter, so a content's "memory strength" reads at a glance.
+const STAGE_FILL = ["bg-stage-1", "bg-stage-2", "bg-stage-3", "bg-stage-4", "bg-stage-5"];
 
 export interface ReviewLogEntry {
   intervalIndexAtReview: number;
@@ -42,7 +46,7 @@ function computeDotStates({
   for (const log of reviewLogs ?? []) {
     const dotNumber = log.intervalIndexAtReview + 1;
     if (dotNumber >= 1 && dotNumber <= TOTAL_REVIEWS) {
-      knownDates.set(dotNumber, log.reviewedAt.slice(0, 10));
+      knownDates.set(dotNumber, toSaoPauloDate(log.reviewedAt));
     }
   }
 
@@ -81,13 +85,13 @@ function dotLabel(state: DotState, dot: number): { title: string; description: s
         description: formatReviewDatePtBR(state.date),
       };
     case "done-unknown":
-      return { title: `Revisão ${dot} feita`, description: "Data exata não disponível aqui." };
+      return { title: `Revisão ${dot} feita`, description: "Abra o conteúdo para ver a data." };
     case "next":
       return { title: `Revisão ${dot} agendada`, description: formatReviewDatePtBR(state.date) };
     case "projected":
       return {
         title: `Revisão ${dot} (previsão)`,
-        description: `${formatReviewDatePtBR(state.date)} — se as anteriores forem feitas em dia.`,
+        description: `${formatReviewDatePtBR(state.date)}, se as anteriores forem feitas em dia.`,
       };
     case "pending":
       return { title: `Revisão ${dot}`, description: "Ainda sem data definida." };
@@ -99,20 +103,24 @@ export function ReviewProgress({
   status,
   nextReviewDate = null,
   reviewLogs,
+  size = "default",
   className,
 }: {
   intervalIndex: number;
   status: string;
   nextReviewDate?: string | null;
   reviewLogs?: ReviewLogEntry[];
+  size?: "default" | "lg";
   className?: string;
 }) {
   const states = computeDotStates({ intervalIndex, status, nextReviewDate, reviewLogs });
+  const completed = status === "mastered" ? TOTAL_REVIEWS : intervalIndex;
 
   return (
     <div
-      className={cn("flex items-center gap-1.5", className)}
-      aria-label={`${status === "mastered" ? TOTAL_REVIEWS : intervalIndex} de ${TOTAL_REVIEWS} revisões concluídas`}
+      className={cn("flex items-center", className)}
+      role="group"
+      aria-label={`${completed} de ${TOTAL_REVIEWS} revisões concluídas`}
     >
       {states.map((state, i) => {
         const dot = i + 1;
@@ -122,19 +130,26 @@ export function ReviewProgress({
         return (
           <Popover key={dot}>
             <PopoverTrigger
-              onClick={(e: MouseEvent) => e.stopPropagation()}
-              className={cn(
-                "flex size-6 cursor-pointer items-center justify-center rounded-full text-xs font-medium transition-all duration-300 ease-out hover:scale-110",
-                done
-                  ? "scale-100 bg-primary text-primary-foreground"
-                  : state.kind === "next"
-                    ? "scale-100 bg-accent text-accent-foreground ring-2 ring-primary/50"
-                    : "scale-90 bg-muted text-muted-foreground",
-              )}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              aria-label={title}
+              className="group/seg flex cursor-pointer items-center px-[2px] py-2 outline-none"
             >
-              {dot}
+              <span
+                className={cn(
+                  "block rounded-full transition-all duration-300 group-hover/seg:scale-y-150 group-focus-visible/seg:ring-2 group-focus-visible/seg:ring-ring",
+                  size === "lg" ? "h-2 w-10 sm:w-14" : "h-1.5 w-5",
+                  done
+                    ? STAGE_FILL[i]
+                    : state.kind === "next"
+                      ? "bg-transparent ring-1 ring-primary/70 ring-inset"
+                      : "bg-stage-0",
+                )}
+              />
             </PopoverTrigger>
-            <PopoverContent className="w-56">
+            <PopoverContent className="w-60">
               <PopoverTitle>{title}</PopoverTitle>
               <PopoverDescription>{description}</PopoverDescription>
             </PopoverContent>

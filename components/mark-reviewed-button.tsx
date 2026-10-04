@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { CheckIcon } from "lucide-react";
+import { cn } from "cn";
 import { markReviewed } from "@/app/contents/actions";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -16,11 +17,13 @@ export function MarkReviewedButton({
   intervalIndex,
   lastReviewedAt,
   today,
+  className,
 }: {
   contentId: string;
   intervalIndex: number;
   lastReviewedAt: string | null;
   today: string;
+  className?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -33,22 +36,41 @@ export function MarkReviewedButton({
         toast.error(ERROR_MESSAGES[result.error] ?? "Não foi possível marcar como revisado.");
         return;
       }
-      toast.success("Revisão registrada!");
+      toast.success(
+        result.data.status === "mastered"
+          ? "Ciclo completo. Conteúdo dominado!"
+          : `Revisão ${intervalIndex + 1} registrada.`,
+      );
       router.refresh();
     });
   }
 
   if (alreadyReviewedToday) {
     return (
-      <Button size="sm" variant="outline" disabled className="text-primary">
-        ✓ Revisão {intervalIndex} feita
-      </Button>
+      <span
+        className={cn(
+          "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 text-sm font-medium whitespace-nowrap text-primary",
+          className,
+        )}
+      >
+        <CheckIcon className="size-4" />
+        Revisão {intervalIndex} feita
+      </span>
     );
   }
 
   return (
-    <Button size="sm" onClick={handleClick} disabled={isPending}>
-      {isPending ? "Marcando…" : "Marcar como revisado"}
-    </Button>
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={isPending}
+      className={cn(
+        "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 text-sm font-medium transition-colors hover:border-primary/60 hover:bg-primary hover:text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-60",
+        className,
+      )}
+    >
+      <CheckIcon className="size-4" />
+      {isPending ? "Registrando…" : "Revisei"}
+    </button>
   );
 }

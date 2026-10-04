@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,13 +33,13 @@ export default async function ResetPasswordPage({
     : null;
 
   return (
-    <main className="flex flex-1 items-center justify-center p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Nova senha</CardTitle>
-          <CardDescription>Escolha uma nova senha para sua conta.</CardDescription>
-        </CardHeader>
-        <CardContent>
+    <main className="flex flex-1 items-center justify-center px-4 py-12">
+      <div className="w-full max-w-sm space-y-8">
+        <div className="space-y-2">
+          <h1 className="font-display text-4xl leading-tight">Nova senha</h1>
+          <p className="text-sm text-muted-foreground">Escolha uma nova senha para sua conta.</p>
+        </div>
+        <div>
           <form action={updatePassword} className="space-y-4">
             {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
             <div className="space-y-2">
@@ -54,12 +53,12 @@ export default async function ResetPasswordPage({
                 autoComplete="new-password"
               />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="h-10 w-full font-semibold">
               Salvar nova senha
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </main>
   );
 }
