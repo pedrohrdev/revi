@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { computeNextReview } from "@/lib/review";
 import { isFutureSaoPaulo, todaySaoPaulo } from "@/lib/date";
+import { normalizeSubtopics } from "@/lib/subtopics";
 import type { Database } from "@/lib/database.types";
 
 export type ActionError =
@@ -22,7 +23,9 @@ export type ActionError =
   | "not_found"
   | "reset_failed"
   | "update_failed"
-  | "delete_failed";
+  | "delete_failed"
+  | "too_many_subtopics"
+  | "subtopic_too_long";
 
 export type ActionResult<T = undefined> =
   | { ok: true; data: T }
@@ -45,6 +48,7 @@ export interface CreateContentInput {
   subject?: string | null;
   notes?: string | null;
   studiedAt: string;
+  subtopics?: string[];
 }
 
 export async function createContent(
@@ -65,10 +69,14 @@ export async function createContent(
   }
   if (isFuture) return { ok: false, error: "studied_at_future" };
 
+  const subtopics = normalizeSubtopics(input.subtopics ?? []);
+  if (!subtopics.ok) return { ok: false, error: subtopics.error };
+
   const insertPayload: Database["public"]["Tables"]["contents"]["Insert"] = {
     title,
     subject: input.subject?.trim() || null,
     notes: input.notes?.trim() || null,
+    subtopics: subtopics.subtopics,
     studied_at: input.studiedAt,
     interval_index: 0,
     next_review_date: computeNextReview(0, input.studiedAt),
@@ -180,6 +188,9 @@ export interface UpdateContentInput {
   title: string;
   subject?: string | null;
   notes?: string | null;
+  // Replaces the whole list — [] removes every subtopic. Omitted (undefined)
+  // leaves the stored list untouched.
+  subtopics?: string[];
 }
 
 export async function updateContent(
@@ -191,6 +202,9 @@ export async function updateContent(
   const title = input.title.trim();
   if (!title) return { ok: false, error: "title_required" };
 
+  const subtopics = input.subtopics === undefined ? null : normalizeSubtopics(input.subtopics);
+  if (subtopics && !subtopics.ok) return { ok: false, error: subtopics.error };
+
   const supabase = await createClient();
   const userId = await requireUserId(supabase);
   if (!userId) return { ok: false, error: "not_authenticated" };
@@ -201,6 +215,7 @@ export async function updateContent(
       title,
       subject: input.subject?.trim() || null,
       notes: input.notes?.trim() || null,
+      ...(subtopics ? { subtopics: subtopics.subtopics } : {}),
     })
     .eq("id", contentId)
     .select("id");

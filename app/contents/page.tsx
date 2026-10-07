@@ -8,6 +8,7 @@ import { formatRelativeDayPtBR, formatShortDatePtBR, todaySaoPaulo } from "@/lib
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { ReviewProgress } from "@/components/review-progress";
 import { SubjectTag } from "@/components/subject-tag";
+import { SubtopicsInline } from "@/components/subtopics-inline";
 
 export const metadata: Metadata = { title: "Conteúdos" };
 
@@ -79,7 +80,9 @@ export default async function ContentsPage(props: PageProps<"/contents">) {
     .filter(
       (content) =>
         !needle ||
-        normalize(`${content.title} ${content.subject ?? ""} ${content.notes ?? ""}`).includes(needle),
+        normalize(
+          `${content.title} ${content.subject ?? ""} ${content.subtopics.join(" ")} ${content.notes ?? ""}`,
+        ).includes(needle),
     )
     .sort((a, b) => {
       if (status === "active") {
@@ -102,7 +105,7 @@ export default async function ContentsPage(props: PageProps<"/contents">) {
             type="search"
             name="q"
             defaultValue={q}
-            placeholder="Buscar por assunto, matéria ou anotação"
+            placeholder="Buscar por assunto, matéria, subconteúdo ou anotação"
             aria-label="Buscar conteúdos"
             className="h-11 w-full rounded-xl border border-border bg-card pr-4 pl-10 text-sm outline-none placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
           />
@@ -195,6 +198,7 @@ export default async function ContentsPage(props: PageProps<"/contents">) {
                     <div className="min-w-0">
                       <p className="truncate text-[15px] font-medium">{content.title}</p>
                       <SubjectTag subject={content.subject} className="text-xs" />
+                      <SubtopicsInline subtopics={content.subtopics} className="mt-1" />
                     </div>
                     <div className="pointer-events-auto relative z-10 w-fit">
                       <ReviewProgress

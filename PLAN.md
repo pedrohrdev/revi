@@ -738,6 +738,38 @@ Não há RPC para `reset`, `archive`, `create` ou `update`: são updates/inserts
   - **Resultado (2026-10-04)**: lint limpo; build gera 13 rotas; testes unitários 54/54 (novo `tests/unit/insights.test.ts`). Testes de integração não rodaram nesta sessão, porque não havia `.env.local` nem credenciais do Supabase no ambiente. `package-lock.json` foi atualizado por `npm install` (faltavam `@emnapi/*`, o que quebrava `npm ci`).
 - **Dependências**: Etapa 22.
 
+### Etapa 24 (pós-MVP, 2026-10-07) — Subconteúdos
+
+> Pedido do usuário: evoluir Matéria → Conteúdo para Matéria → Conteúdo → Subconteúdos (ex.: "Requisições no Express" com `req.params`, `req.query`, `req.body`). Subconteúdos são os conceitos menores de um conteúdo; **não** têm agenda, índice de intervalo, status, histórico nem conclusão próprios — a repetição espaçada continua inteiramente no conteúdo.
+>
+> **Fora do escopo (decisão do usuário):** nada de fluxo Feynman nesta etapa — sem guia/checklist de revisão, sem modal ao clicar em "Revisei", sem perguntas, sem passo extra. "Revisei" continua exatamente como antes. Também nada de IA: uma futura revisão ativa com IA poderá usar título + matéria + subconteúdos (+ anotações) como contexto, mas será uma feature separada; não criar abstrações especulativas para ela agora.
+
+**Decisões**
+
+- **Modelagem**: `contents.subtopics text[] not null default '{}'` — lista ordenada na própria linha, não tabela à parte. Motivos: subconteúdo não tem identidade/estado próprio; criar/editar continua sendo um único INSERT/UPDATE atômico (PostgREST não faz transação entre tabelas); a RLS de `contents` já cobre a coluna; `select("*")` já traz os dados sem join nem N+1. Se um dia cada subconteúdo precisar de estado próprio, migrar para tabela é um `insert ... select unnest(subtopics)`.
+- **Normalização (servidor, `lib/subtopics.ts`)**: trim, colapsa espaços internos, ignora vazios e não-strings, remove duplicatas ignorando maiúsculas/minúsculas, acentos e espaços (mantém a primeira ocorrência e a ordem); só depois aplica os limites — máx. **20** itens e **120** caracteres por item (`too_many_subtopics`, `subtopic_too_long`). Entrada que não é array vira lista vazia.
+- **Banco (defesa em profundidade)**: CHECK `subtopics_valid` via função `subtopics_are_valid(text[])` (IMMUTABLE): array 1-D, ≤ 20 itens, sem nulos/vazios, sem espaços nas pontas, ≤ 120 caracteres, sem duplicatas por `lower()`. A deduplicação por acento fica só no servidor (evita depender de `unaccent`).
+- **Intocados**: `mark_content_reviewed`, `review_logs`, intervalos, `lib/review.ts`, `resetContent`, `archiveContent`. Reset e arquivamento preservam os subconteúdos.
+- `updateContent` substitui a lista inteira (`[]` remove todos); omitir `subtopics` mantém a lista atual.
+
+**Checklist**
+
+- [x] **Migration + tipos** — `supabase/migrations/0004_content_subtopics.sql` (aditiva; linhas existentes recebem `'{}'`). `lib/database.types.ts` atualizado à mão no formato do gerador (coluna em Row/Insert/Update/retorno do RPC + função `subtopics_are_valid`).
+  - [x] **Aplicado no projeto Supabase** (`supabase db push --linked`, feito pelo usuário em 2026-10-07) e tipos regenerados com `supabase gen types typescript --linked --schema public` (a regeneração só com `public` removeu o bloco `graphql_public`, que o app não usa).
+- [x] **Normalização + testes unitários** — `lib/subtopics.ts`, `tests/unit/subtopics.test.ts`.
+- [x] **Server Actions + testes** — `createContent`/`updateContent` em `app/contents/actions.ts` normalizam no servidor; testes de integração em `tests/integration/actions.test.ts` (describe "subtopics") e opção `subtopics` em `createTestContent`.
+- [x] **`SubtopicsField`** (`components/subtopics-field.tsx`, Client Component) — linhas com `name="subtopics"` lidas por `formData.getAll`; chaves estáveis por id; Enter cria a próxima linha e foca nela (nunca envia o formulário); Backspace numa linha vazia a remove; botão X por linha (ao remover a última, o foco vai para "Adicionar subconteúdo"); aviso discreto de duplicata (sem vermelho, que é reservado a "atrasada"); para em 20 linhas; `maxLength` 120; ids via `useId` (o diálogo pode abrir sobre a página de edição).
+- [x] **Registrar estudo** — campo entre Matéria e "Quando estudou"; o diálogo ganhou rolagem (`max-h` + `overflow-y-auto`).
+- [x] **Editar conteúdo** — mesmo campo, pré-preenchido; permite adicionar, editar, remover e remover todos.
+- [x] **Detalhe do conteúdo** — seção "Subconteúdos" (com contagem) acima de Anotações; vazio mostra "Sem subconteúdos. Adicionar", no padrão de Anotações.
+- [x] **Listagem + busca** — linha discreta `a · b · c` (truncada, `title` com o texto completo) sob a matéria; a busca inclui os subconteúdos (`components/subtopics-inline.tsx`).
+- [x] **Home** — a mesma linha discreta na fila "Para revisar"/"Revisado hoje"; não é checklist e não muda o "Revisei".
+- [x] **Verificação** — ver resultado abaixo.
+
+- **Critérios de conclusão**: lint, `tsc`, build e testes unitários passam; testes de integração passam contra o projeto de desenvolvimento com a migration aplicada; verificação visual desktop (1440px) e celular (390px).
+  - **Resultado (2026-10-07)**: lint limpo; `tsc` limpo; build gera as 13 rotas; testes unitários 73/73; **testes de integração 47/47** contra o projeto `aimcowhpirmypxevhtfv` com a migration aplicada (incluindo os 12 novos de subconteúdos: criação com/sem, normalização, limites 20/120, edição, remoção de todos, omissão mantém a lista, CHECK direto no banco, `markReviewed` — inclusive ao concluir o ciclo —, reset e archive preservando a lista, com índice e datas iguais a `computeNextReview`). Verificação no navegador (Playwright, desktop 1440px e celular 390px) contra um mock local do Supabase: 17/17 checagens. Encontrado e **não corrigido** (anterior a esta etapa, fora do escopo): na Home em 390px, um título longo em "Estudado recentemente" faz a página rolar na horizontal.
+- **Dependências**: Etapa 23.
+
 ## Observações para o agente que for implementar
 
 - Implemente **uma etapa por vez**, marque o checkbox correspondente (`- [x]`) ao concluí-la, e só avance para a próxima depois de validar os critérios de conclusão descritos nela — nenhuma etapa deve ser considerada concluída com base em uma etapa futura.

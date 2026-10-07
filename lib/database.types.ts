@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       contents: {
@@ -50,6 +25,7 @@ export type Database = {
           status: string
           studied_at: string
           subject: string | null
+          subtopics: string[]
           title: string
           updated_at: string
           user_id: string
@@ -64,6 +40,7 @@ export type Database = {
           status?: string
           studied_at?: string
           subject?: string | null
+          subtopics?: string[]
           title: string
           updated_at?: string
           user_id: string
@@ -78,6 +55,7 @@ export type Database = {
           status?: string
           studied_at?: string
           subject?: string | null
+          subtopics?: string[]
           title?: string
           updated_at?: string
           user_id?: string
@@ -133,6 +111,7 @@ export type Database = {
           status: string
           studied_at: string
           subject: string | null
+          subtopics: string[]
           title: string
           updated_at: string
           user_id: string
@@ -144,6 +123,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      subtopics_are_valid: { Args: { p_subtopics: string[] }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
@@ -272,9 +252,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

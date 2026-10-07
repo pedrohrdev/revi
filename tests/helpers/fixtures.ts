@@ -140,6 +140,7 @@ export async function createTestContent(
     intervalIndex: number;
     nextReviewDate: string | null;
     status: "active" | "mastered" | "archived";
+    subtopics: string[];
   }> = {},
 ) {
   const { data, error } = await user.client
@@ -149,6 +150,7 @@ export async function createTestContent(
       interval_index: overrides.intervalIndex ?? 0,
       next_review_date: overrides.nextReviewDate === undefined ? todayPlusOneUtcDateString() : overrides.nextReviewDate,
       status: overrides.status ?? "active",
+      subtopics: overrides.subtopics ?? [],
       user_id: user.id,
     })
     .select()

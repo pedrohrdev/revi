@@ -6,6 +6,7 @@ import { daysBetween } from "@/lib/date";
 import { MarkReviewedButton } from "@/components/mark-reviewed-button";
 import { ReviewProgress } from "@/components/review-progress";
 import { SubjectTag } from "@/components/subject-tag";
+import { SubtopicsInline } from "@/components/subtopics-inline";
 
 // One line of the "Hoje" queue: what to review, which review it is, how
 // late it is, and the action — readable without opening the content.
@@ -44,6 +45,7 @@ export function ReviewRow({ content, today }: { content: ContentRow; today: stri
             </span>
           ) : null}
         </div>
+        <SubtopicsInline subtopics={content.subtopics} />
       </div>
       <div className="flex items-center justify-between gap-4 sm:justify-end">
         <ReviewProgress

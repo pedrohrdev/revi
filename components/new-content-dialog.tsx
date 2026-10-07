@@ -23,7 +23,7 @@ export function NewContentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-5 p-6 sm:max-w-md">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] gap-5 overflow-y-auto p-6 sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display text-3xl font-normal">O que você estudou?</DialogTitle>
           <DialogDescription>
