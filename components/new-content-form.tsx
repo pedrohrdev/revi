@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { SubtopicsField } from "@/components/subtopics-field";
 import { createContent } from "@/app/contents/actions";
 import { addDaysToDateString, todaySaoPaulo } from "@/lib/date";
 
@@ -15,6 +16,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   studied_at_invalid: "Data de estudo inválida.",
   studied_at_future: "A data de estudo não pode ser no futuro.",
   not_authenticated: "Sua sessão expirou. Faça login novamente.",
+  too_many_subtopics: "Use no máximo 20 subconteúdos.",
+  subtopic_too_long: "Cada subconteúdo pode ter até 120 caracteres.",
   create_failed: "Não foi possível salvar. Tente novamente.",
 };
 
@@ -36,6 +39,7 @@ export function NewContentForm({
         title: String(formData.get("title") ?? ""),
         subject: String(formData.get("subject") ?? "") || null,
         notes: String(formData.get("notes") ?? "") || null,
+        subtopics: formData.getAll("subtopics").map(String),
         studiedAt: String(formData.get("studiedAt") ?? today),
       });
 
@@ -79,6 +83,8 @@ export function NewContentForm({
           ))}
         </datalist>
       </div>
+
+      <SubtopicsField />
 
       <div className="space-y-2">
         <Label htmlFor="studiedAt">Quando estudou</Label>

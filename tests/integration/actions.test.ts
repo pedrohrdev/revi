@@ -275,6 +275,203 @@ describe("contents Server Actions", () => {
     });
   });
 
+  describe("subtopics", () => {
+    const PAGINATION = ["page", "limit", "skip", "offset"];
+
+    async function storedRow(id: string) {
+      const { data } = await adminClient().from("contents").select("*").eq("id", id).single();
+      return data!;
+    }
+
+    it("creates a content with normalized subtopics and the usual first review date", async () => {
+      await freshUser();
+      const today = todaySaoPaulo();
+
+      const result = await createContent({
+        title: "Paginação em APIs REST",
+        subject: "Node.js",
+        studiedAt: today,
+        subtopics: ["  page ", "limit", "", "skip", "PAGE", "cálculo   de offset", "calculo de offset"],
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const row = await storedRow(result.data.id);
+      expect(row.subtopics).toEqual(["page", "limit", "skip", "cálculo de offset"]);
+      expect(row.interval_index).toBe(0);
+      expect(row.next_review_date).toBe(computeNextReview(0, today));
+    });
+
+    it("creates a content without subtopics as an empty list", async () => {
+      await freshUser();
+
+      const omitted = await createContent({ title: "Sem subconteúdos", studiedAt: todaySaoPaulo() });
+      const blank = await createContent({
+        title: "Só linhas vazias",
+        studiedAt: todaySaoPaulo(),
+        subtopics: ["", "   "],
+      });
+
+      expect(omitted.ok && blank.ok).toBe(true);
+      if (!omitted.ok || !blank.ok) return;
+      expect((await storedRow(omitted.data.id)).subtopics).toEqual([]);
+      expect((await storedRow(blank.data.id)).subtopics).toEqual([]);
+    });
+
+    it("rejects more than 20 subtopics or one over 120 characters, persisting nothing", async () => {
+      await freshUser();
+      const admin = adminClient();
+
+      const tooMany = await createContent({
+        title: "Excesso de subconteúdos",
+        studiedAt: todaySaoPaulo(),
+        subtopics: Array.from({ length: 21 }, (_, i) => `item ${i}`),
+      });
+      expect(tooMany).toEqual({ ok: false, error: "too_many_subtopics" });
+
+      const tooLong = await createContent({
+        title: "Subconteúdo longo",
+        studiedAt: todaySaoPaulo(),
+        subtopics: ["a".repeat(121)],
+      });
+      expect(tooLong).toEqual({ ok: false, error: "subtopic_too_long" });
+
+      const { count } = await admin
+        .from("contents")
+        .select("id", { count: "exact", head: true })
+        .in("title", ["Excesso de subconteúdos", "Subconteúdo longo"]);
+      expect(count).toBe(0);
+    });
+
+    it("edits the list (add, rename, remove) without touching the review state", async () => {
+      const user = await freshUser();
+      const content = await createTestContent(user, { intervalIndex: 2, subtopics: ["req.params", "req.qery"] });
+
+      const result = await updateContent(content.id, {
+        title: content.title,
+        subtopics: ["req.query", "req.body", "REQ.BODY"],
+      });
+
+      expect(result.ok).toBe(true);
+      const row = await storedRow(content.id);
+      expect(row.subtopics).toEqual(["req.query", "req.body"]);
+      expect(row.interval_index).toBe(content.interval_index);
+      expect(row.next_review_date).toBe(content.next_review_date);
+      expect(row.status).toBe(content.status);
+    });
+
+    it("removes every subtopic when given an empty list", async () => {
+      const user = await freshUser();
+      const content = await createTestContent(user, { subtopics: PAGINATION });
+
+      const result = await updateContent(content.id, { title: content.title, subtopics: [] });
+
+      expect(result.ok).toBe(true);
+      expect((await storedRow(content.id)).subtopics).toEqual([]);
+    });
+
+    it("keeps the stored list when an update omits subtopics", async () => {
+      const user = await freshUser();
+      const content = await createTestContent(user, { subtopics: PAGINATION });
+
+      const result = await updateContent(content.id, { title: "Novo título" });
+
+      expect(result.ok).toBe(true);
+      expect((await storedRow(content.id)).subtopics).toEqual(PAGINATION);
+    });
+
+    it("rejects an invalid edit and keeps the previous list", async () => {
+      const user = await freshUser();
+      const content = await createTestContent(user, { subtopics: PAGINATION });
+
+      const result = await updateContent(content.id, {
+        title: content.title,
+        subtopics: Array.from({ length: 21 }, (_, i) => `item ${i}`),
+      });
+
+      expect(result).toEqual({ ok: false, error: "too_many_subtopics" });
+      expect((await storedRow(content.id)).subtopics).toEqual(PAGINATION);
+    });
+
+    it("markReviewed keeps the subtopics and advances exactly as without them", async () => {
+      const user = await freshUser();
+      const content = await createTestContent(user, { intervalIndex: 1, subtopics: PAGINATION });
+      const today = todaySaoPaulo();
+
+      const result = await markReviewed(content.id);
+
+      expect(result.ok).toBe(true);
+      const row = await storedRow(content.id);
+      expect(row.subtopics).toEqual(PAGINATION);
+      expect(row.interval_index).toBe(2);
+      expect(row.next_review_date).toBe(computeNextReview(2, today));
+      expect(row.last_reviewed_at).toBe(today);
+    });
+
+    it("markReviewed keeps the subtopics when the cycle completes", async () => {
+      const user = await freshUser();
+      const content = await createTestContent(user, { intervalIndex: 4, subtopics: PAGINATION });
+
+      const result = await markReviewed(content.id);
+
+      expect(result.ok && result.data.status).toBe("mastered");
+      const row = await storedRow(content.id);
+      expect(row.subtopics).toEqual(PAGINATION);
+      expect(row.next_review_date).toBeNull();
+    });
+
+    it("resetContent keeps the subtopics", async () => {
+      const user = await freshUser();
+      const content = await createTestContent(user, {
+        intervalIndex: 4,
+        status: "mastered",
+        nextReviewDate: null,
+        subtopics: PAGINATION,
+      });
+
+      const result = await resetContent(content.id);
+
+      expect(result.ok).toBe(true);
+      const row = await storedRow(content.id);
+      expect(row.subtopics).toEqual(PAGINATION);
+      expect(row.interval_index).toBe(0);
+      expect(row.next_review_date).toBe(computeNextReview(0, todaySaoPaulo()));
+    });
+
+    it("archiveContent keeps the subtopics", async () => {
+      const user = await freshUser();
+      const content = await createTestContent(user, { subtopics: PAGINATION });
+
+      const result = await archiveContent(content.id);
+
+      expect(result.ok).toBe(true);
+      const row = await storedRow(content.id);
+      expect(row.subtopics).toEqual(PAGINATION);
+      expect(row.status).toBe("archived");
+    });
+
+    it("the database CHECK rejects invalid lists written directly through the API", async () => {
+      const user = await freshUser();
+      const invalidLists = [
+        Array.from({ length: 21 }, (_, i) => `item ${i}`),
+        ["a".repeat(121)],
+        [""],
+        ["  padded  "],
+        ["page", "PAGE"],
+      ];
+
+      for (const subtopics of invalidLists) {
+        const { error } = await user.client.from("contents").insert({
+          title: "Escrita direta",
+          next_review_date: todaySaoPaulo(),
+          user_id: user.id,
+          subtopics,
+        });
+        expect(error?.message).toMatch(/subtopics_valid/);
+      }
+    });
+  });
+
   describe("deleteContent", () => {
     it("deletes a content and cascades its review logs", async () => {
       const user = await freshUser();

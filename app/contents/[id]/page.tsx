@@ -188,6 +188,32 @@ export default async function ContentDetailPage(props: PageProps<"/contents/[id]
         </section>
 
         <div className="space-y-10">
+          <section aria-labelledby="subtopics-heading">
+            <h2 id="subtopics-heading" className="mb-3 text-sm font-semibold">
+              Subconteúdos{" "}
+              {content.subtopics.length > 0 ? (
+                <span className="font-normal text-muted-foreground tabular">{content.subtopics.length}</span>
+              ) : null}
+            </h2>
+            {content.subtopics.length > 0 ? (
+              <ul className="space-y-1.5">
+                {content.subtopics.map((subtopic) => (
+                  <li key={subtopic} className="flex gap-3 text-[15px] leading-relaxed text-foreground/90">
+                    <span className="mt-[0.7em] size-1 shrink-0 rounded-full bg-muted-foreground" aria-hidden />
+                    <span className="min-w-0 break-words">{subtopic}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Sem subconteúdos.{" "}
+                <Link href={`/contents/${content.id}/edit`} className="text-primary hover:underline">
+                  Adicionar
+                </Link>
+              </p>
+            )}
+          </section>
+
           <section aria-labelledby="notes-heading">
             <h2 id="notes-heading" className="mb-3 text-sm font-semibold">
               Anotações
